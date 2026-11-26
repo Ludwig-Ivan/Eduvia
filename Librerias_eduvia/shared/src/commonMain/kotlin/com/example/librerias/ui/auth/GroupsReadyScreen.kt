@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -29,11 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.librerias.model.RegistrationResult
 import com.example.librerias.ui.theme.EduviaColors
+import com.example.librerias.ui.theme.HeaderGradient
 import com.example.librerias.ui.theme.poppinsFamily
-
-private val HeaderGradient = Brush.horizontalGradient(
-    colors = listOf(Color(0xFF1E36E0), Color(0xFF2A4CF0), Color(0xFF1E2BC8), Color(0xFF191680))
-)
 
 /**
  * Información que muestra la pantalla de confirmación del alta de grupos:

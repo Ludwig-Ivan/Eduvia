@@ -41,11 +41,8 @@ import com.example.librerias.model.ChildInfo
 import com.example.librerias.model.RegistrationResult // 👈 NUEVO
 import com.example.librerias.model.UserRole
 import com.example.librerias.ui.theme.EduviaColors
+import com.example.librerias.ui.theme.HeaderGradient
 import com.example.librerias.ui.theme.poppinsFamily
-
-private val HeaderGradient = Brush.horizontalGradient(
-    colors = listOf(Color(0xFF1E36E0), Color(0xFF2A4CF0), Color(0xFF1E2BC8), Color(0xFF191680))
-)
 
 data class TeacherGroup(
     val groupName: String = "",
