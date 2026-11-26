@@ -131,7 +131,7 @@ Ruta común: `backend/src/main/kotlin/com/example/librerias/api/`.
 
 ### DTOs y mappers (`web/dto/`)
 
-- [x] Funciones de extensión `toDto` / `attendanceSummary` — `backend/src/main/kotlin/com/example/librerias/api/web/dto/Mappers.kt`.
+- [x] Funciones de extensión `toDto` — `backend/src/main/kotlin/com/example/librerias/api/web/dto/Mappers.kt`.
 - [x] `PageResponse<T>` — `backend/src/main/kotlin/com/example/librerias/api/web/dto/Dtos.kt`.
 - [x] `UserDto`
 - [x] `ChildInfoDto`
