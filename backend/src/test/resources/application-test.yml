@@ -1,0 +1,14 @@
+spring:
+  # Solo migraciones: a diferencia del perfil `dev`, aquí no se aplica db/dev-data; los crea TestData.
+  flyway.locations: classpath:db/migration
+  # Estadísticas de Hibernate para detectar N+1 en listados de grupos, tareas y juntas.
+  jpa.properties.hibernate.generate_statistics: true
+# No volcar cada sentencia SQL: solo avisos de Hibernate, para no saturar los logs de la suite.
+logging.level.org.hibernate.SQL: warn
+jwt:
+  # Secreto fijo de más de 32 caracteres para tokens deterministas de test; nunca usar en producción.
+  secret: test-secret-con-32-caracteres-minimo-para-jwt
+  # 900 s: el expiresIn que devuelve el contrato de auth y el valor de producción.
+  access-token-seconds: 900
+  # Una semana de validez del refresh, igual que en producción, para probar rotación y revocación.
+  refresh-token-days: 7
