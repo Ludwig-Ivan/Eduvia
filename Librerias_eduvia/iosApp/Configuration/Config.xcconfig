@@ -1,0 +1,11 @@
+// Identidad de firma del equipo. Vacío para el simulador; se rellena al firmar en un dispositivo.
+TEAM_ID=
+
+// El nombre del producto y el bundle id deben coincidir con el target de Xcode.
+// El sufijo $(TEAM_ID) evita colisiones entre desarrolladores con equipos distintos.
+PRODUCT_NAME=LIbrerias
+PRODUCT_BUNDLE_IDENTIFIER=com.example.librerias.LIbrerias$(TEAM_ID)
+
+// Versiones que muestra la App Store / TestFlight; se suben en cada entrega.
+CURRENT_PROJECT_VERSION=1
+MARKETING_VERSION=1.0
