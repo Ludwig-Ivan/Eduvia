@@ -13,7 +13,9 @@ import com.example.librerias.api.repository.StudentRepository
 import com.example.librerias.api.repository.UserRepository
 import com.example.librerias.api.web.badRequest
 import com.example.librerias.api.web.conflict
+import com.example.librerias.api.web.dto.ChildInfoDto
 import com.example.librerias.api.web.dto.FieldErrorDto
+import com.example.librerias.api.web.dto.GroupInputDto
 import com.example.librerias.api.web.dto.LoginRequest
 import com.example.librerias.api.web.dto.RefreshRequest
 import com.example.librerias.api.web.dto.RegisterRequest
@@ -81,20 +83,7 @@ class AuthService(
      */
     @Transactional
     fun register(req: RegisterRequest): TokenResponse {
-        if (req.password != req.confirmPassword) {
-            throw badRequest("Las contraseñas no coinciden", listOf(FieldErrorDto("confirmPassword", "No coincide")))
-        }
-        if (!req.acceptedTerms) {
-            throw badRequest("Debe aceptar los términos", listOf(FieldErrorDto("acceptedTerms", "Requerido")))
-        }
-        val email = normalizeEmail(req.email)
-        val phone = req.phone.filter { it.isDigit() }
-        if (phone.isEmpty()) {
-            throw badRequest("Teléfono inválido", listOf(FieldErrorDto("phone", "Debe contener dígitos")))
-        }
-        if (users.existsByEmailIgnoreCase(email)) throw conflict("El email ya está registrado")
-        if (users.existsByPhone(phone)) throw conflict("El teléfono ya está registrado")
-
+        val (email, phone) = validateRegistration(req)
         val user = users.save(
             User(
                 fullName = req.fullName.trim(),
@@ -107,29 +96,9 @@ class AuthService(
 
         val createdGroups = mutableListOf<SchoolGroup>()
         if (req.role == UserRole.TEACHER) {
-            req.groups.forEach { input ->
-                if (groups.existsByCodeIgnoreCase(generateGroupCode(random))) {
-                    throw conflict("Código de grupo duplicado")
-                }
-                createdGroups += groups.save(
-                    SchoolGroup(
-                        name = input.groupName.trim(),
-                        school = input.schoolName.trim(),
-                        subject = input.subject.trim(),
-                        code = uniqueGroupCode(random, groups::existsByCodeIgnoreCase)
-                            ?: throw conflict("No se pudo generar un código de grupo único"),
-                        teacherId = user.id,
-                    ),
-                )
-            }
+            createdGroups += createGroups(req.groups, user.id)
         } else {
-            req.children.forEach { child ->
-                val group = groups.findByCodeIgnoreCase(child.classCode.trim())
-                    ?: throw badRequest("Código de clase inexistente: ${child.classCode}")
-                students.save(Student(name = child.studentName.trim(), groupId = group.id, parentId = user.id))
-                group.studentCount++
-                groups.save(group)
-            }
+            linkChildren(req.children, user.id)
         }
         return tokens(user, createdGroups)
     }
@@ -301,8 +270,24 @@ class AuthService(
 
     private fun tokens(user: User, createdGroups: List<SchoolGroup>): TokenResponse {
         val now = Instant.now()
+        val access = accessToken(user, now)
+        val rawRefresh = issueRefreshToken(user, now)
+        return TokenResponse(
+            user = UserDto(
+                user.id, user.fullName, user.email, user.phone, user.role,
+            ),
+            createdGroups = createdGroups.map { SchoolGroupDto(
+                it.id, it.name, it.school, it.subject, it.code, it.teacherId, it.studentCount,
+            ) },
+            accessToken = access,
+            refreshToken = rawRefresh,
+            expiresIn = accessTokenSeconds,
+        )
+    }
+
+    private fun accessToken(user: User, now: Instant): String {
         val header = JwsHeader.with(MacAlgorithm.HS256).build()
-        val access = jwtEncoder.encode(
+        return jwtEncoder.encode(
             JwtEncoderParameters.from(
                 header,
                 JwtClaimsSet.builder()
@@ -315,6 +300,9 @@ class AuthService(
                     .build(),
             ),
         ).tokenValue
+    }
+
+    private fun issueRefreshToken(user: User, now: Instant): String {
         val rawRefresh = Base64.getUrlEncoder().withoutPadding()
             .encodeToString(ByteArray(32).also { random.nextBytes(it) })
         refreshTokens.save(
@@ -324,17 +312,51 @@ class AuthService(
                 expiresAt = now.plus(refreshTokenDays, ChronoUnit.DAYS),
             ),
         )
-        return TokenResponse(
-            user = UserDto(
-                user.id, user.fullName, user.email, user.phone, user.role,
-            ),
-            createdGroups = createdGroups.map { SchoolGroupDto(
-                it.id, it.name, it.school, it.subject, it.code, it.teacherId, it.studentCount,
-            ) },
-            accessToken = access,
-            refreshToken = rawRefresh,
-            expiresIn = accessTokenSeconds,
-        )
+        return rawRefresh
+    }
+
+    private fun validateRegistration(req: RegisterRequest): Pair<String, String> {
+        if (req.password != req.confirmPassword) {
+            throw badRequest("Las contraseñas no coinciden", listOf(FieldErrorDto("confirmPassword", "No coincide")))
+        }
+        if (!req.acceptedTerms) {
+            throw badRequest("Debe aceptar los términos", listOf(FieldErrorDto("acceptedTerms", "Requerido")))
+        }
+        val email = normalizeEmail(req.email)
+        val phone = req.phone.filter { it.isDigit() }
+        if (phone.isEmpty()) {
+            throw badRequest("Teléfono inválido", listOf(FieldErrorDto("phone", "Debe contener dígitos")))
+        }
+        if (users.existsByEmailIgnoreCase(email)) throw conflict("El email ya está registrado")
+        if (users.existsByPhone(phone)) throw conflict("El teléfono ya está registrado")
+        return email to phone
+    }
+
+    private fun createGroups(inputs: List<GroupInputDto>, teacherId: Long): List<SchoolGroup> =
+        inputs.map { input ->
+            if (groups.existsByCodeIgnoreCase(generateGroupCode(random))) {
+                throw conflict("Código de grupo duplicado")
+            }
+            groups.save(
+                SchoolGroup(
+                    name = input.groupName.trim(),
+                    school = input.schoolName.trim(),
+                    subject = input.subject.trim(),
+                    code = uniqueGroupCode(random, groups::existsByCodeIgnoreCase)
+                        ?: throw conflict("No se pudo generar un código de grupo único"),
+                    teacherId = teacherId,
+                ),
+            )
+        }
+
+    private fun linkChildren(children: List<ChildInfoDto>, parentId: Long) {
+        children.forEach { child ->
+            val group = groups.findByCodeIgnoreCase(child.classCode.trim())
+                ?: throw badRequest("Código de clase inexistente: ${child.classCode}")
+            students.save(Student(name = child.studentName.trim(), groupId = group.id, parentId = parentId))
+            group.studentCount++
+            groups.save(group)
+        }
     }
 
     private fun normalizeEmail(email: String) = email.trim().lowercase()

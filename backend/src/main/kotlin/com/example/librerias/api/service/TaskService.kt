@@ -3,6 +3,7 @@ package com.example.librerias.api.service
 import com.example.librerias.api.domain.CalendarEvent
 import com.example.librerias.api.domain.CalendarEventType
 import com.example.librerias.api.domain.SchoolTask
+import com.example.librerias.api.domain.Subject
 import com.example.librerias.api.domain.TaskDelivery
 import com.example.librerias.api.repository.CalendarEventRepository
 import com.example.librerias.api.repository.SchoolGroupRepository
@@ -119,16 +120,7 @@ class TaskService(
             ),
         )
         // Misma transacción: el evento comparte el id de la tarea.
-        events.save(
-            CalendarEvent(
-                id = task.id,
-                groupId = groupId,
-                date = date,
-                type = CalendarEventType.TASK,
-                title = task.title,
-                subtitle = subject.name,
-            ),
-        )
+        saveTaskEvent(task, groupId, date, subject)
         return toDtoWithDeliveries(task)
     }
 
@@ -211,6 +203,19 @@ class TaskService(
             deliveries.save(TaskDelivery(task = task, student = student))
         }
         return toDtoWithDeliveries(task, statusOf(task))
+    }
+
+    private fun saveTaskEvent(task: SchoolTask, groupId: Long, date: LocalDate, subject: Subject) {
+        events.save(
+            CalendarEvent(
+                id = task.id,
+                groupId = groupId,
+                date = date,
+                type = CalendarEventType.TASK,
+                title = task.title,
+                subtitle = subject.name,
+            ),
+        )
     }
 
     private fun toDtoWithDeliveries(
