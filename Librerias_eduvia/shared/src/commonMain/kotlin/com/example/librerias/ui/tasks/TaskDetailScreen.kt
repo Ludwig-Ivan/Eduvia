@@ -42,7 +42,7 @@ private val ButtonGreen = Color(0xFF16A34A)
 @Composable
 fun TaskDetailScreen(
     task: SchoolTask? = null,
-    studentId: Long = 1L, // 👈 NUEVO PARÁMETRO
+    studentId: Long = 1L,
     onBack: () -> Unit = {},
     onMarkAsDelivered: () -> Unit = {}
 ) {
