@@ -24,7 +24,7 @@ El porqué: separar los builds mantiene estable la sincronización de Android St
 
 - `cd backend && gradlew.bat check` ejecuta pruebas, contrato y cobertura del backend sin tocar la app.
 - `cd Librerias_eduvia && gradlew.bat :shared:testAndroid` ejecuta las pruebas KMP con sus propias versiones (Ktor 3.2.1).
-- Las versiones de Spring Boot 4 y de las dependencias de test (rest-assured 6.3.0, mockk 1.14.12) se pueden fijar en un solo archivo, [`backend/build.gradle.kts`](../../backend/build.gradle.kts).
+- Las versiones de Spring Boot 4 y de las dependencias de test (rest-assured 6.3.0; MockK se retiró después por no usarse) se pueden fijar en un solo archivo, [`backend/build.gradle.kts`](../../backend/build.gradle.kts).
 - Los errores típicos de Boot 4 (Jackson 3, nueva ruta de `TestRestTemplate`, retirada de `write-dates-as-timestamps`) quedan confinados al backend; están registrados en [`docs/backend/PROGRESS.md`](../backend/PROGRESS.md).
 
 ### Negativas

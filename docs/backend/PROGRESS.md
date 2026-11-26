@@ -89,7 +89,7 @@
 - Arranque manual real en `PORT=8081`: `/actuator/health` → 200 UP; `POST /api/v1/auth/login` con `laura@eduvia.mx`/`Maestra123` → JWT HS256 con `sub`, `roles`, `iss`, `expiresIn:900`; `/me` con token → 200 y sin token → 401 + `WWW-Authenticate: Bearer` + `application/problem+json`.
 
 **Archivos creados:**
-- `backend/build.gradle.kts` — Spring Boot 4.2.0, springdoc 3.2.1, PostgreSQL, Flyway, Security+JWT, Validation, Actuator, JaCoCo ≥80 %, fuentes `test`/`e2eTest`, versiones fijadas (rest-assured 6.3.0, mockk 1.14.12).
+- `backend/build.gradle.kts` — Spring Boot 4.2.0, springdoc 3.2.1, PostgreSQL, Flyway, Security+JWT, Validation, Actuator, JaCoCo ≥80 %, fuentes `test`/`e2eTest`, versiones fijadas (rest-assured 6.3.0; MockK 1.14.12 se retiró en la refactorización por no usarse).
 - `backend/src/main/resources/application.yml`, `application-dev.yml`, `src/test/resources/application-test.yml` (Testcontainers, `ddl-auto: validate`, JWT de test).
 - 10 entidades JPA + repositorios, DTOs/mappers, `PageResponse<T>`, `GlobalExceptionHandler` (ProblemDetail RFC 9457), `JwtConfig`, `SecurityConfig`, servicios y controllers para los 26 paths del contrato.
 - Fixtures de contrato en `contract/fixtures/*.json` (login, register, groups, students, tasks, meetings, calendar, attendance, problem-validation).
