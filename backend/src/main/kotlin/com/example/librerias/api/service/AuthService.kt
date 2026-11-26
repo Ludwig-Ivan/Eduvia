@@ -17,12 +17,15 @@ import com.example.librerias.api.web.dto.FieldErrorDto
 import com.example.librerias.api.web.dto.LoginRequest
 import com.example.librerias.api.web.dto.RefreshRequest
 import com.example.librerias.api.web.dto.RegisterRequest
+import com.example.librerias.api.web.dto.SchoolGroupDto
 import com.example.librerias.api.web.dto.TokenResponse
+import com.example.librerias.api.web.dto.UserDto
 import com.example.librerias.api.web.notFound
 import com.example.librerias.api.web.unauthorized
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm
+import org.springframework.security.oauth2.jwt.JwsHeader
 import org.springframework.security.oauth2.jwt.JwtClaimsSet
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters
@@ -298,7 +301,7 @@ class AuthService(
 
     private fun tokens(user: User, createdGroups: List<SchoolGroup>): TokenResponse {
         val now = Instant.now()
-        val header = org.springframework.security.oauth2.jwt.JwsHeader.with(MacAlgorithm.HS256).build()
+        val header = JwsHeader.with(MacAlgorithm.HS256).build()
         val access = jwtEncoder.encode(
             JwtEncoderParameters.from(
                 header,
@@ -322,10 +325,10 @@ class AuthService(
             ),
         )
         return TokenResponse(
-            user = com.example.librerias.api.web.dto.UserDto(
+            user = UserDto(
                 user.id, user.fullName, user.email, user.phone, user.role,
             ),
-            createdGroups = createdGroups.map { com.example.librerias.api.web.dto.SchoolGroupDto(
+            createdGroups = createdGroups.map { SchoolGroupDto(
                 it.id, it.name, it.school, it.subject, it.code, it.teacherId, it.studentCount,
             ) },
             accessToken = access,
