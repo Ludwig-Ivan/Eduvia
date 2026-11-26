@@ -22,8 +22,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /**
  * Servicio de juntas (reuniones docente-familia), de las respuestas de asistencia y de los
@@ -310,9 +308,4 @@ class MeetingService(
             if (attending > 0) MeetingResponse.ATTENDING else MeetingResponse.PENDING
         }
 
-    private fun parseDate(text: String): LocalDate = try {
-        LocalDate.parse(text.trim(), DateTimeFormatter.ISO_LOCAL_DATE)
-    } catch (_: DateTimeParseException) {
-        throw badRequest("Fecha inválida, use YYYY-MM-DD", listOf(FieldErrorDto("dateText", "Formato YYYY-MM-DD")))
-    }
 }

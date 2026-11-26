@@ -20,8 +20,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /**
  * Servicio de tareas escolares y de sus entregas.
@@ -229,9 +227,4 @@ class TaskService(
         }
     }
 
-    private fun parseDate(text: String): LocalDate = try {
-        LocalDate.parse(text.trim(), DateTimeFormatter.ISO_LOCAL_DATE)
-    } catch (_: DateTimeParseException) {
-        throw badRequest("Fecha inválida, use YYYY-MM-DD", listOf(FieldErrorDto("dateText", "Formato YYYY-MM-DD")))
-    }
 }
