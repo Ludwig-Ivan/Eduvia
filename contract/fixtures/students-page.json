@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "id": 7,
+      "name": "Ana López",
+      "groupId": 1,
+      "parentId": 4
+    },
+    {
+      "id": 8,
+      "name": "Luis Pérez",
+      "groupId": 1,
+      "parentId": 0
+    }
+  ],
+  "page": 0,
+  "size": 50,
+  "totalElements": 2,
+  "totalPages": 1
+}

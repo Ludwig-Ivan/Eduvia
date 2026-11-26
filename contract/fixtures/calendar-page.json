@@ -1,0 +1,30 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "groupId": 1,
+      "date": "2026-12-15",
+      "type": "TASK",
+      "title": "Fracciones",
+      "subtitle": "MATEMATICAS",
+      "attendance": null
+    },
+    {
+      "id": 1001,
+      "groupId": 1,
+      "date": "2026-12-10",
+      "type": "MEETING",
+      "title": "Junta de padres",
+      "subtitle": "8:00",
+      "attendance": {
+        "confirmed": 3,
+        "declined": 1,
+        "pending": 6
+      }
+    }
+  ],
+  "page": 0,
+  "size": 50,
+  "totalElements": 2,
+  "totalPages": 1
+}

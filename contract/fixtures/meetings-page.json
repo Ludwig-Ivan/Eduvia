@@ -1,0 +1,22 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "groupId": 1,
+      "title": "Junta de padres",
+      "date": "2026-12-10",
+      "time": "8:00",
+      "location": "Aula 1",
+      "hasVirtualLink": true,
+      "isNext": true,
+      "relativeLabel": "En 17 días",
+      "response": "PENDING",
+      "virtualLink": "https://meet.example.com/x",
+      "reminderEnabled": true
+    }
+  ],
+  "page": 0,
+  "size": 50,
+  "totalElements": 1,
+  "totalPages": 1
+}

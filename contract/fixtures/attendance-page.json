@@ -1,0 +1,18 @@
+{
+  "items": [
+    {
+      "familyName": "María García",
+      "response": "ATTENDING",
+      "studentId": 7
+    },
+    {
+      "familyName": "Pedro Soto",
+      "response": "PENDING",
+      "studentId": 8
+    }
+  ],
+  "page": 0,
+  "size": 50,
+  "totalElements": 2,
+  "totalPages": 1
+}

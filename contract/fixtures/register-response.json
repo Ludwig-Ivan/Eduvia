@@ -1,0 +1,13 @@
+{
+  "user": {
+    "id": 4,
+    "fullName": "María García",
+    "email": "maria@correo.com",
+    "phone": "5587654321",
+    "role": "PARENT"
+  },
+  "createdGroups": [],
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI0Iiwicm9sZXMiOlsiUEFSRU5UIl0sImlzcyI6ImVkdXZpYS1iYWNrZW5kIn0.signature",
+  "refreshToken": "cmVmcmVzaC10b2tlbi1yZWdpc3Rlcg",
+  "expiresIn": 900
+}

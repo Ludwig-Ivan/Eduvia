@@ -1,0 +1,13 @@
+{
+  "user": {
+    "id": 1,
+    "fullName": "Laura Martínez",
+    "email": "laura@eduvia.mx",
+    "phone": "5512345678",
+    "role": "TEACHER"
+  },
+  "createdGroups": [],
+  "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwicm9sZXMiOlsiVEVBQ0hFUiJdLCJpc3MiOiJlZHV2aWEtYmFja2VuZCJ9.signature",
+  "refreshToken": "dGhpcy1pcy1hLXJlZnJlc2gtdG9rZW4",
+  "expiresIn": 900
+}

@@ -1,0 +1,17 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "name": "3º A",
+      "school": "Colegio EduvIA",
+      "subject": "Matemáticas",
+      "code": "AB-1234",
+      "teacherId": 1,
+      "studentCount": 10
+    }
+  ],
+  "page": 0,
+  "size": 50,
+  "totalElements": 1,
+  "totalPages": 1
+}

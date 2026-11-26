@@ -1,0 +1,22 @@
+{
+  "items": [
+    {
+      "id": 1,
+      "groupId": 1,
+      "title": "Fracciones",
+      "subject": "MATEMATICAS",
+      "description": "Ejercicios del tema 4",
+      "dueDate": "2026-12-15",
+      "publishedDate": "2026-11-20",
+      "teacherName": "Laura Martínez",
+      "totalStudents": 10,
+      "hasPhoto": false,
+      "deliveredStudentIds": [7, 8],
+      "status": "PENDING"
+    }
+  ],
+  "page": 0,
+  "size": 50,
+  "totalElements": 1,
+  "totalPages": 1
+}
