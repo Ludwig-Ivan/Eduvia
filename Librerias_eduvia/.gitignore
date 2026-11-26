@@ -1,0 +1,38 @@
+# Secretos y archivos locales: el SDK de Android y las firmas no se suben.
+.env
+.env.*
+!.env.example
+local.properties
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+*.dump
+*.sql.gz
+
+# Artefactos generados por Gradle, Kotlin, Android e iOS.
+.kotlin
+.gradle
+**/build/
+out/
+*.apk
+*.aab
+captures/
+.externalNativeBuild
+.cxx
+*.iml
+.DS_Store
+xcuserdata/
+Pods/
+node_modules/
+
+# IDEs personales.
+.idea
+
+# Xcode: se comparte el proyecto, no los datos de usuario ni los archivos temporales.
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
+!*.xcworkspace/contents.xcworkspacedata
+**/xcshareddata/WorkspaceSettings.xcsettings

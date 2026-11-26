@@ -1,0 +1,14 @@
+* text=auto
+
+# Scripts: los de Unix deben conservar LF; los de Windows, CRLF.
+gradlew text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binarios: nunca se renormalizan como texto.
+*.jar binary
+*.png binary
+*.jpg binary
+*.webp binary

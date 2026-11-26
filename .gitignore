@@ -1,0 +1,31 @@
+# Secretos y archivos locales: NUNCA subir valores reales.
+.env
+.env.*
+!.env.example
+local.properties
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+*.dump
+*.sql.gz
+# Copia local obsoleta del backend; el código vivo está en backend/.
+backend.zip
+
+# Artefactos generados por Gradle, Kotlin, Android e iOS.
+.gradle/
+.kotlin/
+build/
+**/build/
+out/
+*.apk
+*.aab
+captures/
+*.iml
+.DS_Store
+xcuserdata/
+Pods/
+
+# IDEs: no se comparte configuración personal.
+.idea/
+.vscode/

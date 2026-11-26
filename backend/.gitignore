@@ -1,0 +1,55 @@
+# HELP.md es generado por Spring Initializr; la documentación real está en docs/.
+HELP.md
+
+# Secretos y archivos locales (la plantilla .env.example SÍ se sube).
+.env
+.env.*
+!.env.example
+local.properties
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+*.dump
+*.sql.gz
+
+# Artefactos de build e IDE. El wrapper JAR se conserva porque gradlew lo necesita.
+.gradle
+.kotlin/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+.idea
+*.iws
+*.iml
+*.ipr
+.DS_Store
+xcuserdata/
+Pods/
+*.apk
+*.aab
+captures/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
