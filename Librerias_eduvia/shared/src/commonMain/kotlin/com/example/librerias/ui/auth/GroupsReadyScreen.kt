@@ -137,13 +137,13 @@ private fun GroupCard(group: GroupCodeInfo) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(
                 modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(Color.White)
-                    .border(0.8.dp, EduviaColors.Primary, RoundedCornerShape(10.dp)).clickable { /* TODO copiar */ },
+                    .border(0.8.dp, EduviaColors.Primary, RoundedCornerShape(10.dp)).clickable { /* Sin acción: copiar código pendiente (Q10/H8). */ },
                 contentAlignment = Alignment.Center
             ) { Icon(Icons.Outlined.ContentCopy, "Copiar código", tint = EduviaColors.Primary, modifier = Modifier.size(20.dp)) }
 
             Box(
                 modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(Color.White)
-                    .border(0.8.dp, EduviaColors.Primary, RoundedCornerShape(10.dp)).clickable { /* TODO compartir */ },
+                    .border(0.8.dp, EduviaColors.Primary, RoundedCornerShape(10.dp)).clickable { /* Sin acción: compartir código pendiente (Q10/H8). */ },
                 contentAlignment = Alignment.Center
             ) { Icon(Icons.Outlined.Share, "Compartir código", tint = EduviaColors.Primary, modifier = Modifier.size(20.dp)) }
         }
