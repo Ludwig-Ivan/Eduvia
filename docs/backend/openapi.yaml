@@ -1,0 +1,891 @@
+openapi: 3.0.3
+info:
+  title: EduvIA API
+  version: 1.0.0
+  description: Contrato derivado de la app KMP (Caso B). Ver docs/backend/api-contract.md.
+servers:
+  - url: http://localhost:8080
+    description: Desarrollo local
+  - url: http://10.0.2.2:8080
+    description: Emulador Android
+tags:
+  - name: auth
+  - name: groups
+  - name: tasks
+  - name: meetings
+  - name: calendar
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [auth]
+      operationId: register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Cuenta creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrationResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/auth/login:
+    post:
+      tags: [auth]
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/auth/refresh:
+    post:
+      tags: [auth]
+      operationId: refresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Tokens rotados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '204': { description: Sesión cerrada }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/auth/exists/email:
+    get:
+      tags: [auth]
+      operationId: emailExists
+      parameters:
+        - { name: email, in: query, required: true, schema: { type: string, format: email } }
+      responses:
+        '200':
+          description: Resultado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [exists]
+                properties:
+                  exists: { type: boolean }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/v1/auth/exists/phone:
+    get:
+      tags: [auth]
+      operationId: phoneExists
+      parameters:
+        - { name: phone, in: query, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Resultado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [exists]
+                properties:
+                  exists: { type: boolean }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/v1/auth/reset-code:
+    post:
+      tags: [auth]
+      operationId: createResetCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200': { description: Código enviado (o correo inexistente) }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/v1/auth/reset-password:
+    post:
+      tags: [auth]
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200': { description: Contraseña actualizada }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/v1/me:
+    get:
+      tags: [auth]
+      operationId: me
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Usuario actual
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /api/v1/groups:
+    get:
+      tags: [groups]
+      operationId: listGroups
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: teacherId, in: query, required: true, schema: { type: integer, format: int64 } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+      responses:
+        '200':
+          description: Grupos del docente
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SchoolGroupPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [groups]
+      operationId: createGroup
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateGroupRequest' }
+      responses:
+        '201':
+          description: Grupo creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SchoolGroup' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/groups/{id}:
+    get:
+      tags: [groups]
+      operationId: getGroup
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        '200':
+          description: Grupo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SchoolGroup' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/groups/by-code:
+    get:
+      tags: [groups]
+      operationId: getGroupByCode
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: code, in: query, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Grupo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SchoolGroup' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/groups/{id}/students:
+    get:
+      tags: [groups]
+      operationId: listStudentsOfGroup
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+      responses:
+        '200':
+          description: Alumnos del grupo
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StudentPage' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/students:
+    get:
+      tags: [groups]
+      operationId: listStudents
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: parentId, in: query, required: true, schema: { type: integer, format: int64 } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+      responses:
+        '200':
+          description: Alumnos del padre
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StudentPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/v1/students:link:
+    post:
+      tags: [groups]
+      operationId: linkStudent
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LinkStudentRequest' }
+      responses:
+        '201':
+          description: Alumno vinculado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Student' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/tasks:
+    get:
+      tags: [tasks]
+      operationId: listTasks
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: groupId, in: query, required: true, schema: { type: integer, format: int64 } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+      responses:
+        '200':
+          description: Tareas ordenadas por fecha de entrega
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SchoolTaskPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [tasks]
+      operationId: createTask
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewTaskRequest' }
+      responses:
+        '201':
+          description: Tarea creada (y evento de calendario)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SchoolTask' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/tasks/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    get:
+      tags: [tasks]
+      operationId: getTask
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Tarea
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SchoolTask' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [tasks]
+      operationId: updateTask
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateTaskRequest' }
+      responses:
+        '200':
+          description: Tarea actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SchoolTask' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [tasks]
+      operationId: deleteTask
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Tarea borrada }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/tasks/{id}/deliveries:
+    post:
+      tags: [tasks]
+      operationId: markDelivered
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [studentId]
+              properties:
+                studentId: { type: integer, format: int64 }
+      responses:
+        '200':
+          description: Entrega registrada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SchoolTask' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/meetings:
+    get:
+      tags: [meetings]
+      operationId: listMeetings
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+      responses:
+        '200':
+          description: Juntas
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MeetingPage' }
+    post:
+      tags: [meetings]
+      operationId: createMeeting
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewMeetingRequest' }
+      responses:
+        '201':
+          description: Junta creada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Meeting' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/v1/meetings/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    get:
+      tags: [meetings]
+      operationId: getMeeting
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Junta
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Meeting' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [meetings]
+      operationId: updateMeeting
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateMeetingRequest' }
+      responses:
+        '200':
+          description: Junta actualizada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Meeting' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [meetings]
+      operationId: deleteMeeting
+      security: [{ bearerAuth: [] }]
+      responses:
+        '204': { description: Junta borrada }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/meetings/{id}/attendance:
+    get:
+      tags: [meetings]
+      operationId: getAttendance
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+      responses:
+        '200':
+          description: Respuestas de las familias
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FamilyResponsePage' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/meetings/{id}/responses/{studentId}:
+    put:
+      tags: [meetings]
+      operationId: setResponse
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+        - { name: studentId, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [response]
+              properties:
+                response: { $ref: '#/components/schemas/MeetingResponse' }
+      responses:
+        '200':
+          description: Respuesta registrada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Meeting' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/meetings/responses:
+    get:
+      tags: [meetings]
+      operationId: listResponses
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: studentId, in: query, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        '200':
+          description: Mapa meetingId → response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  responses:
+                    type: object
+                    additionalProperties: { $ref: '#/components/schemas/MeetingResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/v1/meetings/{id}/reminders:
+    post:
+      tags: [meetings]
+      operationId: remindPending
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        '200':
+          description: Pendientes recordados
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [pending]
+                properties:
+                  pending: { type: integer }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/v1/calendar/events:
+    get:
+      tags: [calendar]
+      operationId: listEvents
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: role, in: query, required: true, schema: { $ref: '#/components/schemas/UserRole' } }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+      responses:
+        '200':
+          description: Eventos
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CalendarEventPage' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [calendar]
+      operationId: createEvent
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CalendarEvent' }
+      responses:
+        '201':
+          description: Evento creado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CalendarEvent' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /api/v1/calendar/events/{id}:
+    delete:
+      tags: [calendar]
+      operationId: deleteEvent
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        '204': { description: Evento borrado }
+        '404': { $ref: '#/components/responses/NotFound' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Page:
+      name: page
+      in: query
+      schema: { type: integer, minimum: 0, default: 0 }
+    Size:
+      name: size
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+  responses:
+    BadRequest:
+      description: Validación incorrecta (ProblemDetail)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    Unauthorized:
+      description: No autenticado
+      headers:
+        WWW-Authenticate:
+          schema: { type: string }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    NotFound:
+      description: No encontrado
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    Conflict:
+      description: Conflicto
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+  schemas:
+    UserRole:
+      type: string
+      enum: [PARENT, TEACHER]
+    Subject:
+      type: string
+      enum: [MATEMATICAS, ESPANOL, CIENCIAS, HISTORIA, OTRA]
+    TaskStatus:
+      type: string
+      enum: [PENDING, DELIVERED, EXPIRED]
+    MeetingResponse:
+      type: string
+      enum: [PENDING, ATTENDING, DECLINED]
+    CalendarEventType:
+      type: string
+      enum: [TASK, MEETING, EXAM]
+    User:
+      type: object
+      required: [id, fullName, email, phone, role]
+      properties:
+        id: { type: integer, format: int64 }
+        fullName: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string }
+        role: { $ref: '#/components/schemas/UserRole' }
+    ChildInfo:
+      type: object
+      required: [classCode, studentName]
+      properties:
+        classCode: { type: string }
+        studentName: { type: string }
+    GroupInput:
+      type: object
+      required: [groupName, schoolName, subject]
+      properties:
+        groupName: { type: string }
+        schoolName: { type: string }
+        subject: { type: string }
+    RegisterRequest:
+      type: object
+      required: [role, fullName, email, phone, password, confirmPassword, acceptedTerms]
+      properties:
+        role: { $ref: '#/components/schemas/UserRole' }
+        fullName: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string }
+        password: { type: string, format: password, minLength: 8 }
+        confirmPassword: { type: string, format: password }
+        acceptedTerms: { type: boolean }
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/ChildInfo' }
+        groups:
+          type: array
+          items: { $ref: '#/components/schemas/GroupInput' }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string }
+    ResetPasswordRequest:
+      type: object
+      required: [email, code, newPassword, confirmPassword]
+      properties:
+        email: { type: string, format: email }
+        code: { type: string, minLength: 6, maxLength: 6 }
+        newPassword: { type: string, format: password }
+        confirmPassword: { type: string, format: password }
+    TokenResponse:
+      type: object
+      required: [accessToken, refreshToken, expiresIn]
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        expiresIn: { type: integer, description: Segundos de vida del access token }
+    LoginResponse:
+      allOf:
+        - $ref: '#/components/schemas/TokenResponse'
+        - type: object
+          required: [user]
+          properties:
+            user: { $ref: '#/components/schemas/User' }
+    RegistrationResponse:
+      allOf:
+        - $ref: '#/components/schemas/TokenResponse'
+        - type: object
+          required: [user, createdGroups]
+          properties:
+            user: { $ref: '#/components/schemas/User' }
+            createdGroups:
+              type: array
+              items: { $ref: '#/components/schemas/SchoolGroup' }
+    SchoolGroup:
+      type: object
+      required: [id, name, school, subject, code, teacherId, studentCount]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        school: { type: string }
+        subject: { type: string }
+        code: { type: string }
+        teacherId: { type: integer, format: int64 }
+        studentCount: { type: integer }
+    CreateGroupRequest:
+      type: object
+      required: [teacherId, groupName, schoolName, subject]
+      properties:
+        teacherId: { type: integer, format: int64 }
+        groupName: { type: string }
+        schoolName: { type: string }
+        subject: { type: string }
+    Student:
+      type: object
+      required: [id, name, groupId, parentId]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        groupId: { type: integer, format: int64 }
+        parentId: { type: integer, format: int64 }
+    LinkStudentRequest:
+      type: object
+      required: [parentId, classCode, studentName]
+      properties:
+        parentId: { type: integer, format: int64 }
+        classCode: { type: string }
+        studentName: { type: string }
+    SchoolTask:
+      type: object
+      required: [id, groupId, title, subject, description, dueDate, publishedDate, teacherName, totalStudents, hasPhoto, deliveredStudentIds]
+      properties:
+        id: { type: integer, format: int64 }
+        groupId: { type: integer, format: int64 }
+        title: { type: string }
+        subject: { $ref: '#/components/schemas/Subject' }
+        description: { type: string }
+        dueDate: { type: string, format: date }
+        publishedDate: { type: string, format: date }
+        teacherName: { type: string }
+        totalStudents: { type: integer }
+        hasPhoto: { type: boolean }
+        deliveredStudentIds:
+          type: array
+          items: { type: integer, format: int64 }
+        status: { $ref: '#/components/schemas/TaskStatus' }
+    NewTaskRequest:
+      type: object
+      required: [groupId, title, subject, description, dateText]
+      properties:
+        groupId: { type: integer, format: int64 }
+        title: { type: string }
+        subject: { $ref: '#/components/schemas/Subject' }
+        description: { type: string }
+        dateText: { type: string, description: 'YYYY-MM-DD' }
+    UpdateTaskRequest:
+      type: object
+      required: [title, subject, description, dateText]
+      properties:
+        title: { type: string }
+        subject: { $ref: '#/components/schemas/Subject' }
+        description: { type: string }
+        dateText: { type: string }
+    Meeting:
+      type: object
+      required: [id, groupId, title, date, time, location, hasVirtualLink, isNext, response, reminderEnabled]
+      properties:
+        id: { type: integer, format: int64 }
+        groupId: { type: integer, format: int64 }
+        title: { type: string }
+        date: { type: string, format: date }
+        time: { type: string }
+        location: { type: string }
+        hasVirtualLink: { type: boolean }
+        isNext: { type: boolean }
+        relativeLabel: { type: string, nullable: true }
+        response: { $ref: '#/components/schemas/MeetingResponse' }
+        virtualLink: { type: string, nullable: true }
+        reminderEnabled: { type: boolean }
+    NewMeetingRequest:
+      type: object
+      required: [title, dateText, time, place, link, reminder, groupId]
+      properties:
+        title: { type: string }
+        dateText: { type: string }
+        time: { type: string }
+        place: { type: string }
+        link: { type: string }
+        reminder: { type: boolean }
+        groupId: { type: integer, format: int64 }
+    UpdateMeetingRequest:
+      type: object
+      required: [title, dateText, time, place, link, reminder]
+      properties:
+        title: { type: string }
+        dateText: { type: string, description: 'YYYY-MM-DD' }
+        time: { type: string }
+        place: { type: string }
+        link: { type: string, nullable: true }
+        reminder: { type: boolean }
+    FamilyResponse:
+      type: object
+      required: [familyName, response, studentId]
+      properties:
+        familyName: { type: string }
+        response: { $ref: '#/components/schemas/MeetingResponse' }
+        studentId: { type: integer, format: int64 }
+    AttendanceSummary:
+      type: object
+      required: [confirmed, declined, pending]
+      properties:
+        confirmed: { type: integer }
+        declined: { type: integer }
+        pending: { type: integer }
+    CalendarEvent:
+      type: object
+      required: [id, groupId, date, type, title, subtitle]
+      properties:
+        id: { type: integer, format: int64 }
+        groupId: { type: integer, format: int64 }
+        date: { type: string, format: date }
+        type: { $ref: '#/components/schemas/CalendarEventType' }
+        title: { type: string }
+        subtitle: { type: string }
+        attendance:
+          allOf:
+            - $ref: '#/components/schemas/AttendanceSummary'
+          nullable: true
+    ProblemDetail:
+      type: object
+      required: [status, title]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
+    SchoolGroupPage:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/SchoolGroup' } }
+    StudentPage:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/Student' } }
+    SchoolTaskPage:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/SchoolTask' } }
+    MeetingPage:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/Meeting' } }
+    FamilyResponsePage:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/FamilyResponse' } }
+    CalendarEventPage:
+      allOf:
+        - $ref: '#/components/schemas/PageResponse'
+        - type: object
+          properties:
+            items: { type: array, items: { $ref: '#/components/schemas/CalendarEvent' } }
+    PageResponse:
+      type: object
+      required: [items, page, size, totalElements, totalPages]
+      properties:
+        items: { type: array, items: {} }
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
