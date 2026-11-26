@@ -92,7 +92,8 @@ class GroupService(
                 name = groupName.trim(),
                 school = schoolName.trim(),
                 subject = subject.trim(),
-                code = uniqueCode(),
+                code = uniqueGroupCode(random, groups::existsByCodeIgnoreCase)
+                    ?: throw conflict("No se pudo generar un código único"),
                 teacherId = teacherId,
             ),
         )
@@ -150,13 +151,4 @@ class GroupService(
         return student
     }
 
-    private fun uniqueCode(): String {
-        val alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-        repeat(20) {
-            val code = (1..2).map { alphabet[random.nextInt(alphabet.length)] }.joinToString("") + "-" +
-                (1..4).map { alphabet[random.nextInt(alphabet.length)] }.joinToString("")
-            if (!groups.existsByCodeIgnoreCase(code)) return code
-        }
-        throw conflict("No se pudo generar un código único")
-    }
 }

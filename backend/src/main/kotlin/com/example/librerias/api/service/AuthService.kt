@@ -105,7 +105,7 @@ class AuthService(
         val createdGroups = mutableListOf<SchoolGroup>()
         if (req.role == UserRole.TEACHER) {
             req.groups.forEach { input ->
-                if (groups.existsByCodeIgnoreCase(generateGroupCode())) {
+                if (groups.existsByCodeIgnoreCase(generateGroupCode(random))) {
                     throw conflict("Código de grupo duplicado")
                 }
                 createdGroups += groups.save(
@@ -113,7 +113,8 @@ class AuthService(
                         name = input.groupName.trim(),
                         school = input.schoolName.trim(),
                         subject = input.subject.trim(),
-                        code = uniqueGroupCode(),
+                        code = uniqueGroupCode(random, groups::existsByCodeIgnoreCase)
+                            ?: throw conflict("No se pudo generar un código de grupo único"),
                         teacherId = user.id,
                     ),
                 )
@@ -340,17 +341,4 @@ class AuthService(
             MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8)),
         )
 
-    private fun generateGroupCode(): String {
-        val alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-        return (1..2).map { alphabet[random.nextInt(alphabet.length)] }.joinToString("") + "-" +
-            (1..4).map { alphabet[random.nextInt(alphabet.length)] }.joinToString("")
-    }
-
-    private fun uniqueGroupCode(): String {
-        repeat(20) {
-            val code = generateGroupCode()
-            if (!groups.existsByCodeIgnoreCase(code)) return code
-        }
-        throw conflict("No se pudo generar un código de grupo único")
-    }
 }
