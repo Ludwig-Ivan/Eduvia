@@ -1,0 +1,24 @@
+# Compose mínimo para `./gradlew bootRun`: solo PostgreSQL.
+# El stack completo (API + BD + Adminer) está en ../docker-compose.yml.
+# Este archivo existe porque Spring Boot lo detecta automáticamente al arrancar en local.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-app}
+      POSTGRES_USER: ${DB_USER:-app}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-app}
+    # Publicado para que la API en el host (no en contenedor) pueda conectarse.
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Evita que bootRun intente aplicar Flyway antes de que PostgreSQL acepte conexiones.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-app} -d ${DB_NAME:-app}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:

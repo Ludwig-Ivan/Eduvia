@@ -1,0 +1,73 @@
+# Stack completo de EduvIA (API + PostgreSQL + visor opcional).
+# El nombre `miapp` fija el prefijo de contenedores y redes. Las pruebas usan un nombre
+# distinto (`miapp-test`, `miapp-manual`) para poder levantar varios stacks a la vez
+# sin chocar de puertos; ver scripts/test-all.ps1 y docs/docker.md.
+name: miapp
+
+services:
+  # Base de datos: Flyway aplica V1/V2 al arrancar la API, no al arrancar PostgreSQL.
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-app}
+      POSTGRES_USER: ${DB_USER:-app}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-app}
+    # El puerto se publica para inspeccionar la BD desde el host (Adminer, psql).
+    # La API no lo usa: dentro de la red de Compose llega por `postgres:5432`.
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    # Volumen con nombre: `docker compose down` conserva los datos; `-v` los borra.
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # `depends_on: service_healthy` de la API espera a que pg_isready responda;
+    # sin healthcheck la API intentaría conectarse antes de que PostgreSQL acepte conexiones.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-app} -d ${DB_NAME:-app}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # API Spring Boot construida desde backend/Dockerfile (multi-stage, usuario no root).
+  api:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Los tres valores DB_* deben coincidir con los de postgres; el host es el
+      # nombre del servicio, no `localhost`, porque cada contenedor tiene su propia red local.
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-app}
+      DB_USER: ${DB_USER:-app}
+      DB_PASSWORD: ${DB_PASSWORD:-app}
+      # El `:?` falla rápido si falta el secreto: nunca se deja un JWT_SECRET por defecto
+      # en un despliegue. El valor de ejemplo de .env.example es solo para desarrollo.
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
+      # `dev` carga V1000__seed.sql (datos de la demo). En producción usar `prod`.
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      # Spring Boot detecta Compose automáticamente y sobreescribe DB_URL; se desactiva
+      # para que la configuración explícita de arriba sea la única fuente.
+      SPRING_DOCKER_COMPOSE_ENABLED: "false"
+    ports:
+      - "${API_PORT:-8080}:8080"
+    # La imagen instala `curl` solo para este healthcheck; el puerto es el interno (8080),
+    # no el publicado, porque la comprobación se ejecuta dentro del contenedor.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      start_period: 40s
+      retries: 10
+
+  # Visor web de PostgreSQL. No arranca por defecto: perfil `tools` opcional
+  # (`docker compose --profile tools up -d`) para no exponerlo en un despliegue.
+  adminer:
+    image: adminer
+    profiles: ["tools"]
+    depends_on: [postgres]
+    ports:
+      - "${ADMINER_PORT:-8081}:8080"
+
+volumes:
+  pgdata:

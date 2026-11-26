@@ -1,0 +1,10 @@
+# La imagen multietapa solo necesita gradlew, build files y src.
+# Excluir estos directorios reduce el contexto enviado al daemon de Docker
+# y evita copiar artefactos generados en la máquina del desarrollador.
+build/
+.gradle/
+.idea/
+*.iml
+# El secreto JWT se inyecta como variable de entorno, nunca se copia a la imagen.
+.env
+out/
