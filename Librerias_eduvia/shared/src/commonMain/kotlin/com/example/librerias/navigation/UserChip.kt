@@ -46,9 +46,9 @@ import com.example.librerias.ui.theme.EduviaColors
 @Composable
 fun UserChip(
     name: String = "María",
-    children: List<Student> = emptyList(), // 👈 NUEVO PARÁMETRO
-    selectedChildId: Long? = null,        // 👈 NUEVO PARÁMETRO
-    onChildSelected: (Student) -> Unit = {}, // 👈 NUEVO PARÁMETRO
+    children: List<Student> = emptyList(),
+    selectedChildId: Long? = null,
+    onChildSelected: (Student) -> Unit = {},
     onLogoutClick: () -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }

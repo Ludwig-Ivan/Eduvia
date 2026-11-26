@@ -54,7 +54,6 @@ dependencies {
 	// Versiones gestionadas por Spring Boot (sin fijar a mano).
 	// Versiones verificadas en Maven Central (Boot 4 no las gestiona).
 	testImplementation("io.rest-assured:rest-assured:6.3.0")
-	testImplementation("io.mockk:mockk:1.14.12")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

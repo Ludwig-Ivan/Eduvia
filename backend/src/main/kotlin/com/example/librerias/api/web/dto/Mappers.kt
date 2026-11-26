@@ -128,9 +128,9 @@ private fun relativeLabel(date: LocalDate, today: LocalDate): String? {
  * (`TASK`, `MEETING`, `EXAM`). El `id` se copia tal cual: ya viene desplazado con
  * `MEETING_ID_OFFSET` para las juntas y coincide con el id de la tarea en los eventos `TASK`.
  *
- * `attendance` es un campo **derivado**, no una columna: [attendanceSummary] lo calcula
- * `CalendarService` solo para juntas y solo en la vista del docente (`role=TEACHER`); con
- * `null` por defecto la vista del padre no recibe información de asistencia.
+ * `attendance` es un campo **derivado**, no una columna: `CalendarService` lo calcula solo para
+ * juntas y solo en la vista del docente (`role=TEACHER`); con `null` por defecto la vista del
+ * padre no recibe información de asistencia.
  */
 fun CalendarEvent.toDto(attendance: AttendanceSummaryDto? = null) = CalendarEventDto(
     id = id,
@@ -141,13 +141,3 @@ fun CalendarEvent.toDto(attendance: AttendanceSummaryDto? = null) = CalendarEven
     subtitle = subtitle,
     attendance = attendance,
 )
-
-/**
- * Capa: mapper (fábrica de dto). Construye [AttendanceSummaryDto] a partir de los tres contadores
- * de `meeting_responses` agrupados por respuesta (`ATTENDING`, `DECLINED`, `PENDING`).
- *
- * Es un valor derivado que la app calculaba en memoria (`AttendanceSummary.total` y
- * `confirmedFraction`); el backend lo rellena en el calendario del docente sin persistirlo.
- */
-fun attendanceSummary(confirmed: Int, declined: Int, pending: Int) =
-    AttendanceSummaryDto(confirmed, declined, pending)

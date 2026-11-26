@@ -22,8 +22,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /**
  * Servicio de juntas (reuniones docente-familia), de las respuestas de asistencia y de los
@@ -105,19 +103,10 @@ class MeetingService(
         reminder: Boolean,
         groupId: Long,
     ): com.example.librerias.api.web.dto.MeetingDto {
-        if (title.isBlank()) throw badRequest("Título obligatorio", listOf(FieldErrorDto("title", "Requerido")))
-        if (time.isBlank()) throw badRequest("Hora obligatoria", listOf(FieldErrorDto("time", "Requerida")))
-        if (place.isBlank()) throw badRequest("Lugar obligatorio", listOf(FieldErrorDto("place", "Requerido")))
-        if (!link.isNullOrBlank() && !link.matches(Regex("^https?://.+"))) {
-            throw badRequest("Enlace inválido", listOf(FieldErrorDto("link", "Debe ser http(s)")))
-        }
+        validateMeetingFields(title, time, place, link)
         val date = parseDate(dateText)
         if (!groups.existsById(groupId)) throw notFound("Grupo no encontrado")
-        if (meetings.findConflictingTimes(groupId, date, place.trim(), -1)
-                .any { it == time.trim().lowercase() }
-        ) {
-            throw conflict("Ya existe una junta en esa fecha, hora y lugar")
-        }
+        ensureNoConflict(groupId, date, time, place, -1)
         val meeting = meetings.save(
             Meeting(
                 groupId = groupId,
@@ -172,20 +161,11 @@ class MeetingService(
         reminder: Boolean,
     ): com.example.librerias.api.web.dto.MeetingDto {
         val meeting = meetings.findById(id).orElseThrow { notFound("Junta no encontrada") }
-        if (title.isBlank()) throw badRequest("Título obligatorio", listOf(FieldErrorDto("title", "Requerido")))
-        if (time.isBlank()) throw badRequest("Hora obligatoria", listOf(FieldErrorDto("time", "Requerida")))
-        if (place.isBlank()) throw badRequest("Lugar obligatorio", listOf(FieldErrorDto("place", "Requerido")))
-        if (!link.isNullOrBlank() && !link.matches(Regex("^https?://.+"))) {
-            throw badRequest("Enlace inválido", listOf(FieldErrorDto("link", "Debe ser http(s)")))
-        }
+        validateMeetingFields(title, time, place, link)
         val date = parseDate(dateText)
         val normalizedTime = time.trim()
         val normalizedPlace = place.trim()
-        if (meetings.findConflictingTimes(meeting.groupId, date, normalizedPlace, id)
-                .any { it == normalizedTime.lowercase() }
-        ) {
-            throw conflict("Ya existe una junta en esa fecha, hora y lugar")
-        }
+        ensureNoConflict(meeting.groupId, date, normalizedTime, normalizedPlace, id)
         val normalizedLink = link?.takeIf { it.isNotBlank() }
         meeting.title = title.trim()
         meeting.date = date
@@ -305,14 +285,26 @@ class MeetingService(
         return PendingDto(pending)
     }
 
+    private fun validateMeetingFields(title: String, time: String, place: String, link: String?) {
+        if (title.isBlank()) throw badRequest("Título obligatorio", listOf(FieldErrorDto("title", "Requerido")))
+        if (time.isBlank()) throw badRequest("Hora obligatoria", listOf(FieldErrorDto("time", "Requerida")))
+        if (place.isBlank()) throw badRequest("Lugar obligatorio", listOf(FieldErrorDto("place", "Requerido")))
+        if (!link.isNullOrBlank() && !link.matches(Regex("^https?://.+"))) {
+            throw badRequest("Enlace inválido", listOf(FieldErrorDto("link", "Debe ser http(s)")))
+        }
+    }
+
+    private fun ensureNoConflict(groupId: Long, date: LocalDate, time: String, place: String, excludedId: Long) {
+        if (meetings.findConflictingTimes(groupId, date, place.trim(), excludedId)
+                .any { it == time.trim().lowercase() }
+        ) {
+            throw conflict("Ya existe una junta en esa fecha, hora y lugar")
+        }
+    }
+
     private fun responseOf(meetingId: Long): MeetingResponse =
         responses.countByMeetingIdAndResponse(meetingId, MeetingResponse.ATTENDING).let { attending ->
             if (attending > 0) MeetingResponse.ATTENDING else MeetingResponse.PENDING
         }
 
-    private fun parseDate(text: String): LocalDate = try {
-        LocalDate.parse(text.trim(), DateTimeFormatter.ISO_LOCAL_DATE)
-    } catch (_: DateTimeParseException) {
-        throw badRequest("Fecha inválida, use YYYY-MM-DD", listOf(FieldErrorDto("dateText", "Formato YYYY-MM-DD")))
-    }
 }

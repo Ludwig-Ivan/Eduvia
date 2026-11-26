@@ -1,6 +1,7 @@
 package com.example.librerias.ui.theme
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 
@@ -29,6 +30,11 @@ object EduviaColors {
     val IconMuted = Color(0xFF334155)
     val Success = Color(0xFF16A34A)
 }
+
+/** Degradado de cabecera compartido por las pantallas de alta de grupos. */
+internal val HeaderGradient = Brush.horizontalGradient(
+    colors = listOf(Color(0xFF1E36E0), Color(0xFF2A4CF0), Color(0xFF1E2BC8), Color(0xFF191680))
+)
 
 /**
  * Tipografía del diseño: Poppins.

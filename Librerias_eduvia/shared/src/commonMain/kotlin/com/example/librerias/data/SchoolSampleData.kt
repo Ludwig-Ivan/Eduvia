@@ -34,8 +34,6 @@ object SchoolSampleData {
     val groups: List<SchoolGroup> = listOf(
         SchoolGroup(1L, "3° B", "Escuela Primaria Benito Juárez", "Matemáticas", "3B-7K2P", 1L, GROUP_SIZE),
         SchoolGroup(2L, "2° A", "Escuela Primaria Benito Juárez", "", "2A-9M4X", 1L, 0),
-        // 👇 GRUPO DE PEDRO (2° B) CON 2 ALUMNOS
-        //SchoolGroup(4L, "2° B", "Secundaria Técnica", "Geografía", "2B-XXXX", 3L, 2)
     )
 
     // Alumno 1 = hijo/a de María (parentId = 2) + Alumnos de Carlos en 2° B

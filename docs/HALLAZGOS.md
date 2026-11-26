@@ -88,4 +88,4 @@
 - **Archivo y líneas:** `docs/guias/README.md:7-10` (y bloques `text` equivalentes en `docs/guias/api-rest.md`, `docs/guias/app-kotlin.md` y `docs/guias/base-de-datos.md`).
 - **Evidencia:** los bloques con `──mensaje──▶`, el árbol de módulos y el ER en ASCII quedaban fuera de la regla «solo Mermaid» de esta tarea.
 - **Propuesta:** sustituirlos por `flowchart`, `sequenceDiagram` y `erDiagram` de Mermaid con etiquetas entre comillas. Es cambio de `.md`, por lo que sí se aplica en la fase de documentación del proyecto.
-- **Resolución:** los cuatro archivos se convirtieron a Mermaid y los 21 bloques del repositorio se validaron con el parser de `@mermaid-js/mermaid-cli` 11.17.1.
+- **Resolución:** los cuatro archivos se convirtieron a Mermaid y los 21 bloques originales se validaron entonces con el parser de `@mermaid-js/mermaid-cli` 11.17.1 (el repositorio tiene más bloques añadidos después).

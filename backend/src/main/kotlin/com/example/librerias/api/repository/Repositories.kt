@@ -19,7 +19,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
-import java.time.Instant
 
 /**
  * Capa: repository (Spring Data JPA) para la entidad `User` / tabla `users`.
@@ -37,7 +36,6 @@ import java.time.Instant
  */
 interface UserRepository : JpaRepository<User, Long> {
     fun findByEmailIgnoreCase(email: String): User?
-    fun findByPhone(phone: String): User?
     fun existsByEmailIgnoreCase(email: String): Boolean
     fun existsByPhone(phone: String): Boolean
 }
@@ -51,13 +49,10 @@ interface UserRepository : JpaRepository<User, Long> {
  * Colaboradores: `AuthService`, que valida el hash del token presentado en refresh y logout.
  *
  * Endpoints atendidos: `POST /auth/refresh` y `POST /auth/logout` (ambos con
- * `findByTokenHash`). `findAllByUserIdAndRevokedAtIsNullAndExpiresAtAfter` está disponible para
- * revocar todas las sesiones vigentes de un usuario; el logout actual revoca únicamente el
- * token enviado por la app.
+ * `findByTokenHash`). El logout revoca únicamente el token enviado por la app.
  */
 interface RefreshTokenRepository : JpaRepository<RefreshToken, Long> {
     fun findByTokenHash(tokenHash: String): RefreshToken?
-    fun findAllByUserIdAndRevokedAtIsNullAndExpiresAtAfter(userId: Long, now: Instant): List<RefreshToken>
 }
 
 /**
@@ -224,17 +219,14 @@ interface MeetingResponseRepository : JpaRepository<MeetingResponseEntity, Meeti
 /**
  * Capa: repository (Spring Data JPA) para `CalendarEvent` / tabla `calendar_events`.
  *
- * Responsabilidad: recuperar eventos de un grupo y tipo ordenados por fecha. Es la única
- * consulta derivada declarada aquí (sin `@Query`): el id de los eventos no se genera en este
- * repositorio, sino que lo suministran tarea/junta o la secuencia de la BD.
+ * Responsabilidad: acceso base a `calendar_events` mediante los CRUD de `JpaRepository`.
+ * No declara consultas derivadas: el id de los eventos lo suministran tarea/junta o la secuencia
+ * de la BD, y el listado paginado de `GET /calendar/events` usa `findAll()` y ordena en memoria.
  *
  * Colaboradores: `CalendarService` y `MeetingService` (sincronización del evento `1000 + id`
- * de cada junta). El listado paginado actual de `GET /calendar/events` usa `findAll()` y ordena
- * en memoria; este método cubre las consultas filtradas por grupo y tipo del calendario.
+ * de cada junta).
  *
- * Endpoints atendidos: `GET /calendar/events` (filtrado por grupo/tipo), `POST /calendar/events`
- * y `DELETE /calendar/events/{id}`.
+ * Endpoints atendidos: `GET /calendar/events`, `POST /calendar/events` y
+ * `DELETE /calendar/events/{id}`.
  */
-interface CalendarEventRepository : JpaRepository<CalendarEvent, Long> {
-    fun findAllByGroupIdAndTypeOrderByDateAsc(groupId: Long, type: com.example.librerias.api.domain.CalendarEventType): List<CalendarEvent>
-}
+interface CalendarEventRepository : JpaRepository<CalendarEvent, Long> { }

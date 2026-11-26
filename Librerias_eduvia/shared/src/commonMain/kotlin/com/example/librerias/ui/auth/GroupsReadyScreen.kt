@@ -20,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -29,11 +28,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.librerias.model.RegistrationResult
 import com.example.librerias.ui.theme.EduviaColors
+import com.example.librerias.ui.theme.HeaderGradient
 import com.example.librerias.ui.theme.poppinsFamily
-
-private val HeaderGradient = Brush.horizontalGradient(
-    colors = listOf(Color(0xFF1E36E0), Color(0xFF2A4CF0), Color(0xFF1E2BC8), Color(0xFF191680))
-)
 
 /**
  * Información que muestra la pantalla de confirmación del alta de grupos:
@@ -137,13 +133,13 @@ private fun GroupCard(group: GroupCodeInfo) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(
                 modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(Color.White)
-                    .border(0.8.dp, EduviaColors.Primary, RoundedCornerShape(10.dp)).clickable { /* TODO copiar */ },
+                    .border(0.8.dp, EduviaColors.Primary, RoundedCornerShape(10.dp)).clickable { /* Sin acción: copiar código pendiente (Q10/H8). */ },
                 contentAlignment = Alignment.Center
             ) { Icon(Icons.Outlined.ContentCopy, "Copiar código", tint = EduviaColors.Primary, modifier = Modifier.size(20.dp)) }
 
             Box(
                 modifier = Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(Color.White)
-                    .border(0.8.dp, EduviaColors.Primary, RoundedCornerShape(10.dp)).clickable { /* TODO compartir */ },
+                    .border(0.8.dp, EduviaColors.Primary, RoundedCornerShape(10.dp)).clickable { /* Sin acción: compartir código pendiente (Q10/H8). */ },
                 contentAlignment = Alignment.Center
             ) { Icon(Icons.Outlined.Share, "Compartir código", tint = EduviaColors.Primary, modifier = Modifier.size(20.dp)) }
         }

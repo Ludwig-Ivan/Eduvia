@@ -3,6 +3,7 @@ package com.example.librerias.api.service
 import com.example.librerias.api.domain.CalendarEvent
 import com.example.librerias.api.domain.CalendarEventType
 import com.example.librerias.api.domain.SchoolTask
+import com.example.librerias.api.domain.Subject
 import com.example.librerias.api.domain.TaskDelivery
 import com.example.librerias.api.repository.CalendarEventRepository
 import com.example.librerias.api.repository.SchoolGroupRepository
@@ -20,8 +21,6 @@ import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 /**
  * Servicio de tareas escolares y de sus entregas.
@@ -121,16 +120,7 @@ class TaskService(
             ),
         )
         // Misma transacción: el evento comparte el id de la tarea.
-        events.save(
-            CalendarEvent(
-                id = task.id,
-                groupId = groupId,
-                date = date,
-                type = CalendarEventType.TASK,
-                title = task.title,
-                subtitle = subject.name,
-            ),
-        )
+        saveTaskEvent(task, groupId, date, subject)
         return toDtoWithDeliveries(task)
     }
 
@@ -215,6 +205,19 @@ class TaskService(
         return toDtoWithDeliveries(task, statusOf(task))
     }
 
+    private fun saveTaskEvent(task: SchoolTask, groupId: Long, date: LocalDate, subject: Subject) {
+        events.save(
+            CalendarEvent(
+                id = task.id,
+                groupId = groupId,
+                date = date,
+                type = CalendarEventType.TASK,
+                title = task.title,
+                subtitle = subject.name,
+            ),
+        )
+    }
+
     private fun toDtoWithDeliveries(
         task: SchoolTask,
         status: String? = null,
@@ -229,9 +232,4 @@ class TaskService(
         }
     }
 
-    private fun parseDate(text: String): LocalDate = try {
-        LocalDate.parse(text.trim(), DateTimeFormatter.ISO_LOCAL_DATE)
-    } catch (_: DateTimeParseException) {
-        throw badRequest("Fecha inválida, use YYYY-MM-DD", listOf(FieldErrorDto("dateText", "Formato YYYY-MM-DD")))
-    }
 }
