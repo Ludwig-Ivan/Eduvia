@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -65,7 +64,7 @@ class TaskController(private val service: TaskService) {
         @RequestParam(defaultValue = "0") page: Int,
         @Parameter(description = "Tamaño de página; el controlador lo limita a 100.", example = "50")
         @RequestParam(defaultValue = "50") size: Int,
-    ) = service.list(groupId, PageRequest.of(page, size.coerceAtMost(MAX_PAGE_SIZE), Sort.by("dueDate", "id")))
+    ) = service.list(groupId, pageRequest(page, size, Sort.by("dueDate", "id")))
 
     /**
      * Devuelve el detalle de una tarea con el estado calculado a partir de las entregas y la fecha de vencimiento.

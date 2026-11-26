@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -36,7 +35,7 @@ class CalendarController(private val service: CalendarService) {
     /**
      * Lista los eventos del calendario en páginas, con asistencia calculada solo para el rol docente.
      *
-     * Capa controller: convierte `page` y `size` en un `PageRequest` y delega el filtrado y el mapeo en [CalendarService]; `size.coerceAtMost(MAX_PAGE_SIZE)` aplica el límite de paginación acordado con la app KMP, que no pagina por sí misma.
+     * Capa controller: convierte `page` y `size` en un `PageRequest` mediante `pageRequest` y delega el filtrado y el mapeo en [CalendarService]; el límite `MAX_PAGE_SIZE` es el acordado con la app KMP, que no pagina por sí misma.
      *
      * @param role rol del usuario que consulta: `PARENT` oculta la asistencia y `TEACHER` la incluye en los eventos de junta.
      * @param page índice de página basado en 0.
@@ -62,7 +61,7 @@ class CalendarController(private val service: CalendarService) {
         @RequestParam(defaultValue = "0") page: Int,
         @Parameter(description = "Tamaño de página; el controlador lo limita a 100.", example = "50")
         @RequestParam(defaultValue = "50") size: Int,
-    ) = service.list(role, PageRequest.of(page, size.coerceAtMost(MAX_PAGE_SIZE)))
+    ) = service.list(role, pageRequest(page, size))
 
     /**
      * Crea un evento directo en el calendario, sin depender de una tarea o junta previa.
