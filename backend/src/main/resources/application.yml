@@ -1,0 +1,27 @@
+spring:
+  application.name: api # Nombre de la aplicación en logs y Actuator; no cambia el contrato de la API.
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/app} # Valor por defecto solo para desarrollo local; en despliegue se inyecta DB_URL.
+    username: ${DB_USER:app} # Credencial local por defecto, sobreescrita por DB_USER fuera del entorno local.
+    password: ${DB_PASSWORD:app} # Igual que el usuario: nunca usar este valor en producción.
+  jpa:
+    open-in-view: false # La sesión de Hibernate no queda abierta al renderizar: evita cargas lazy implícitas y consultas N+1 fuera de las transacciones de servicio.
+    hibernate.ddl-auto: validate # Flyway es la única fuente del esquema; Hibernate solo comprueba que las entidades encajan, sin crear ni alterar tablas.
+    properties.hibernate.jdbc.time_zone: UTC # Fechas e instantes se escriben en UTC para que backend y app interpreten igual los vencimientos.
+  jackson:
+    default-property-inclusion: always # La app KMP necesita campos nulos explícitos (por ejemplo `attendance: null` para PARENT), no propiedades omitidas.
+  mvc.problemdetails.enabled: true # Los errores se devuelven como ProblemDetail (RFC 9457), el formato que parsea el cliente Ktor de la app.
+  flyway:
+    enabled: true # Flyway aplica las migraciones versionadas al arrancar y, junto a `ddl-auto: validate`, es la fuente única del esquema.
+server:
+  port: ${PORT:8080} # Puerto local por defecto; Compose y pruebas lo sobreescriben sin tocar código.
+  error.include-stacktrace: never # No exponer trazas en la respuesta HTTP: al cliente le basta el ProblemDetail.
+management:
+  endpoints.web.exposure.include: health,info # Solo se publican health e info; el resto de Actuator queda cerrado por seguridad.
+  endpoint.health.probes.enabled: true # Activa los grupos de liveness/readiness usados por los healthchecks de Docker Compose.
+springdoc:
+  swagger-ui.path: /swagger-ui.html # Ruta pública de la UI OpenAPI con la que se verificó el contrato; coincide con la ruta permitida en SecurityConfig.
+jwt:
+  secret: ${JWT_SECRET:cambia-esto-por-32+-caracteres-para-desarrollo-local} # Valor de desarrollo únicamente: en producción debe inyectarse un secreto de al menos 32 bytes.
+  access-token-seconds: 900 # 15 minutos: suficiente para la sesión en memoria de la app y corto para limitar el impacto de un token robado; la app refresca sola.
+  refresh-token-days: 7 # Una semana de refresco es aceptable para la app; cada uso rota el token, por lo que un reintento con el antiguo se detecta.

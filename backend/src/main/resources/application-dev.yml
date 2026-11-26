@@ -1,0 +1,9 @@
+spring:
+  flyway.locations: classpath:db/migration,classpath:db/dev-data # En dev se añade `db/dev-data` con datos demo; en producción solo se aplican las migraciones, sin semillas de prueba.
+  jpa:
+    show-sql: false # No volcar cada SQL: ensucia los logs; las consultas problemáticas se detectan con las estadísticas de abajo.
+    properties.hibernate.generate_statistics: true # Hibernate acumula métricas de consultas para detectar N+1 en los listados de grupos, tareas y juntas durante el desarrollo.
+logging:
+  level:
+    org.hibernate.SQL: warn # Con show-sql desactivado, solo aparece SQL cuando Hibernate avisa de algo relevante.
+    com.example.librerias.api: info # Nivel info para seguir el arranque del perfil dev sin saturar el log de la app.
