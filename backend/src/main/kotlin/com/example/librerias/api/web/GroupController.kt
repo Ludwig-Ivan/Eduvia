@@ -62,7 +62,7 @@ class GroupController(private val service: GroupService) {
         @RequestParam(defaultValue = "0") page: Int,
         @Parameter(description = "Tamaño de página; el controlador lo limita a 100.", example = "50")
         @RequestParam(defaultValue = "50") size: Int,
-    ) = service.listByTeacher(teacherId, PageRequest.of(page, size.coerceAtMost(100), Sort.by("id")))
+    ) = service.listByTeacher(teacherId, PageRequest.of(page, size.coerceAtMost(MAX_PAGE_SIZE), Sort.by("id")))
 
     /**
      * Busca un grupo por su código de clase, que la app KMP introduce para vincular alumnos.
@@ -168,7 +168,7 @@ class GroupController(private val service: GroupService) {
         @RequestParam(defaultValue = "0") page: Int,
         @Parameter(description = "Tamaño de página; el controlador lo limita a 100.", example = "50")
         @RequestParam(defaultValue = "50") size: Int,
-    ) = service.studentsOfGroup(id, PageRequest.of(page, size.coerceAtMost(100), Sort.by("id")))
+    ) = service.studentsOfGroup(id, PageRequest.of(page, size.coerceAtMost(MAX_PAGE_SIZE), Sort.by("id")))
 
     /**
      * Lista en páginas los alumnos asociados a un tutor, ordenados por id.
@@ -198,7 +198,7 @@ class GroupController(private val service: GroupService) {
         @RequestParam(defaultValue = "0") page: Int,
         @Parameter(description = "Tamaño de página; el controlador lo limita a 100.", example = "50")
         @RequestParam(defaultValue = "50") size: Int,
-    ) = service.studentsOfParent(parentId, PageRequest.of(page, size.coerceAtMost(100), Sort.by("id")))
+    ) = service.studentsOfParent(parentId, PageRequest.of(page, size.coerceAtMost(MAX_PAGE_SIZE), Sort.by("id")))
 
     /**
      * Vincula un alumno a un grupo a partir del código de clase y actualiza el contador de alumnos del grupo.

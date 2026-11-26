@@ -39,7 +39,7 @@ class MeetingController(private val service: MeetingService) {
     /**
      * Lista juntas en páginas ordenadas por fecha e id, con la respuesta y los campos derivados ya calculados.
      *
-     * Capa controller: delega en [MeetingService] la paginación y el mapeo; `size.coerceAtMost(100)` respeta el límite del contrato con la app móvil, que no pagina por sí misma.
+     * Capa controller: delega en [MeetingService] la paginación y el mapeo; `size.coerceAtMost(MAX_PAGE_SIZE)` respeta el límite del contrato con la app móvil, que no pagina por sí misma.
      *
      * @param page índice de página basado en 0.
      * @param size tamaño solicitado; se limita a 100 elementos por página.
@@ -60,7 +60,7 @@ class MeetingController(private val service: MeetingService) {
         @RequestParam(defaultValue = "0") page: Int,
         @Parameter(description = "Tamaño de página; el controlador lo limita a 100.", example = "50")
         @RequestParam(defaultValue = "50") size: Int,
-    ) = service.list(PageRequest.of(page, size.coerceAtMost(100), Sort.by("date", "id")))
+    ) = service.list(PageRequest.of(page, size.coerceAtMost(MAX_PAGE_SIZE), Sort.by("date", "id")))
 
     /**
      * Devuelve el mapa de respuestas de un alumno indexado por id de junta, para que la app KMP pinte el estado de cada junta sin consultarlas una a una.
@@ -226,7 +226,7 @@ class MeetingController(private val service: MeetingService) {
         @RequestParam(defaultValue = "0") page: Int,
         @Parameter(description = "Tamaño de página; el controlador lo limita a 100.", example = "50")
         @RequestParam(defaultValue = "50") size: Int,
-    ) = service.attendance(id, PageRequest.of(page, size.coerceAtMost(100)))
+    ) = service.attendance(id, PageRequest.of(page, size.coerceAtMost(MAX_PAGE_SIZE)))
 
     /**
      * Registra o actualiza la respuesta de un alumno a una junta, recalculando la respuesta agregada que ve la app KMP.

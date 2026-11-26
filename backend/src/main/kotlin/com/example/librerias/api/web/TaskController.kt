@@ -65,7 +65,7 @@ class TaskController(private val service: TaskService) {
         @RequestParam(defaultValue = "0") page: Int,
         @Parameter(description = "Tamaño de página; el controlador lo limita a 100.", example = "50")
         @RequestParam(defaultValue = "50") size: Int,
-    ) = service.list(groupId, PageRequest.of(page, size.coerceAtMost(100), Sort.by("dueDate", "id")))
+    ) = service.list(groupId, PageRequest.of(page, size.coerceAtMost(MAX_PAGE_SIZE), Sort.by("dueDate", "id")))
 
     /**
      * Devuelve el detalle de una tarea con el estado calculado a partir de las entregas y la fecha de vencimiento.
