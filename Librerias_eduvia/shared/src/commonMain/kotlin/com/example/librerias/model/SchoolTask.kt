@@ -30,7 +30,6 @@ data class SchoolTask(
     val hasPhoto: Boolean = false,
     val deliveredStudentIds: Set<Long> = emptySet()
 ) {
-    // 👇 ESTA ES LA PROPIEDAD QUE FALTA
     /** Título compuesto para la lista; derivado, no persistido en la app original. */
     val displayTitle: String get() = "${subject.label} · $title"
 
