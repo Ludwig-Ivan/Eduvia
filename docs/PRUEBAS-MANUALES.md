@@ -2,7 +2,7 @@
 
 Propósito: dejar **API + PostgreSQL corriendo** mientras se ejecutan pruebas E2E, se hacen peticiones manuales o se prueba la app en el emulador. Todo se hace desde la raíz del repositorio en Windows (PowerShell).
 
-> En este equipo el puerto `8080` lo ocupa un Apache ajeno: **no lo detengas**. Usa siempre un puerto alternativo y un nombre de proyecto propio (`-p ...`). La guía usa `miapp-manual` con `18088` (API), `15435` (PostgreSQL) y `18089` (Adminer), que no chocan con `miapp-test` (18080/15432/18081) de [`scripts/test-all.ps1`](../scripts/test-all.ps1).
+> En este equipo el puerto `8080` lo ocupa un Apache ajeno: **no lo detengas**. Usa siempre un puerto alternativo y un nombre de proyecto propio (`-p ...`). La guía usa `miapp-manual` con `18088` (API), `15432` (PostgreSQL) y `18089` (Adminer), que no chocan con `miapp-test` (18080/15432/18081) de [`scripts/test-all.ps1`](../scripts/test-all.ps1).
 
 ## 0. Preparación (una vez)
 
@@ -21,7 +21,7 @@ notepad .env
 
 ```powershell
 $env:API_PORT = '18088'
-$env:DB_PORT = '15435'
+$env:DB_PORT = '15432'
 $env:ADMINER_PORT = '18089'
 docker compose -p miapp-manual config -q
 docker compose -p miapp-manual up -d --build --wait
@@ -128,6 +128,18 @@ docker compose -p miapp-manual down -v --remove-orphans   # borra el volumen: pr
 ```
 
 No edites migraciones ya aplicadas: si sale `FlywayValidateException: checksum mismatch`, restaura el archivo original y usa `down -v`.
+
+## 7. Resultado de la verificación en Android (ADB)
+
+Ejecutada con `emulator-5554`, `adb root`, `adb reverse --list` → `host-17 tcp:8080 tcp:18088` y el stack `miapp-manual` en `18088/15432`. Ambos contenedores en estado `healthy` y `/actuator/health` en `UP`.
+
+- **Sesión:** Bienvenida → login de `laura@eduvia.mx` y de `maria@correo.com`; Inicio, Tareas, Calendario y Juntas muestran datos de la API (6 tareas, 2 juntas, eventos reales y asistencia real).
+- **CRUD docente:** alta → edición → borrado de una junta y de una tarea desde la UI, confirmados en `GET /meetings`, `GET /tasks`, `GET /calendar/events` y en psql. La BD terminó con 2 juntas, 6 tareas y 22 eventos; la tarea creada mostró `teacherName = Laura Hernández` (usuario de la sesión) y el grupo correcto.
+- **Padre:** cambio de asistencia (`ATTENDING` → `DECLINED` → `ATTENDING`) persistido en `meeting_responses(1,1)`.
+- **Recuperación:** en `dev`, `POST /auth/reset-code` devuelve el código y la app lo muestra en `📩 Correo simulado (solo demo)`; el cambio de contraseña desde la UI se confirmó con `POST /auth/login`. La contraseña demo se restauró a `Maestra123` al terminar.
+- **Logs:** sin `ERROR`/excepciones nuevas en la API ni en `logcat` tras las correcciones de fecha y de borrado de eventos.
+
+> `app.reset-code-in-response: true` está activado **solo** en `application-dev.yml`; en producción el código no se expone en la respuesta.
 
 ## Referencias
 

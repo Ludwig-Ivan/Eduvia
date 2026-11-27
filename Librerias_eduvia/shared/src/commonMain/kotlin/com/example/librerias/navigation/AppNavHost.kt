@@ -260,6 +260,7 @@ fun AppNavHost(container: AppContainer) {
                             meetings = meetings,
                             tasks = tasks,
                             viewModel = meetingsVm,
+                            today = today,
                             userName = user.fullName,
                             groupName = groupName,
                             groupSize = groupSize,
@@ -295,10 +296,9 @@ fun AppNavHost(container: AppContainer) {
                             onCreateTask = { showCreateTask = true },
                             onEditTask = { taskToEdit = it; showCreateTask = true },
                             onDeleteTask = { task ->
+                                // El backend borra el evento de calendario en la misma transacción
+                                // que la tarea; un DELETE adicional provocaba 404/500 intermitentes.
                                 tasksVm.deleteTask(task.id)
-                                scope.launch {
-                                    container.deleteEvent(task.id)
-                                }
                             }
                         )
                     } else {

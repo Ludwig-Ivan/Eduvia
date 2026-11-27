@@ -1,3 +1,8 @@
+# En dev la app KMP necesita ver el código de recuperación: no hay servidor de correo real y
+# FakeEmailSender alimenta el `demoInbox` con el valor devuelto por POST /auth/reset-code.
+app:
+  reset-code-in-response: true
+
 spring:
   flyway.locations: classpath:db/migration,classpath:db/dev-data # En dev se añade `db/dev-data` con datos demo; en producción solo se aplican las migraciones, sin semillas de prueba.
   jpa:

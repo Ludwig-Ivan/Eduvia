@@ -1,6 +1,6 @@
 # Hallazgos — EduvIA
 
-> Inventario de **bugs, inconsistencias y código confuso** detectados durante la documentación. Los hallazgos de código y los cambios en documentos preexistentes **no se han arreglado**: este archivo los describe con archivo, línea, evidencia y propuesta. Dos incidencias puramente documentales (H6 y H12) sí se aplicaron porque entraban en el alcance permitido de archivos `.md`, y están marcadas como **resuelta**. Si una corrección cambiaría el comportamiento, requiere autorización explícita.
+> Inventario de **bugs, inconsistencias y código confuso** detectados durante la documentación. Cada hallazgo se describe con archivo, línea, evidencia y propuesta; los que se aplicaron están marcados como **resuelta** (H6, H9, H10, H12 y H14–H16). Si una corrección cambiaría el comportamiento, requiere autorización explícita.
 >
 > Los puntos que necesitan decisión también se reflejan en [`backend/OPEN-QUESTIONS.md`](backend/OPEN-QUESTIONS.md) con la marca `⚠️ Por confirmar`.
 
@@ -76,6 +76,24 @@
 - **Evidencia:** las implementaciones en memoria siguen existiendo y `AppContainer` inyecta las remotas; leer solo el paquete `data/repository` puede dar a entender que la app todavía no llama a la API.
 - **Propuesta original:** explicar en `docs/app-kmp.md` y en el KDoc de `AppContainer` que son implementaciones de reserva/ejemplo y que la ruta activa es `data/remote`. No eliminarlas sin decisión.
 - **Resolución:** eliminadas las 5 implementaciones en memoria y los 4 archivos de datos de muestra que las alimentaban; la app solo usa `data/remote`.
+
+### H14 — Fecha fija «Lunes 12 de octubre» en el Inicio
+
+- **Archivos y líneas:** `Librerias_eduvia/.../ui/home/TeacherHomeScreen.kt:86` y `:57`.
+- **Evidencia:** el resumen del Inicio mostraba una fecha literal mientras el Calendario ya usaba la fecha real del `TodayProvider`; en la verificación con ADB aparecía «Lunes 12 de octubre» con el emulador en noviembre.
+- **Resolución:** `TeacherHomeScreen` recibe `today: CalendarDate` desde `AppNavHost` y pinta `today.longLabel()`; la verificación en ADB mostró «Viernes 27 de noviembre».
+
+### H15 — Doble borrado del evento al eliminar una tarea
+
+- **Archivo y línea:** `Librerias_eduvia/.../navigation/AppNavHost.kt:299`.
+- **Evidencia:** `onDeleteTask` llamaba a `tasksVm.deleteTask(task.id)` y, además, a `container.deleteEvent(task.id)`. El backend ya borra el evento en la misma transacción, por lo que el segundo `DELETE` provocaba `ObjectOptimisticLockingFailureException` / 500 intermitentes en los logs de la API.
+- **Resolución:** se eliminó la llamada adicional; repetir alta y borrado de tarea desde la UI no generó errores en la API ni en `logcat`.
+
+### H16 — Código de recuperación no visible en la app de dev
+
+- **Archivos y líneas:** `backend/src/main/resources/application-dev.yml` y `backend/.../service/AuthService.kt:65`.
+- **Evidencia:** `POST /auth/reset-code` devolvía `"resetCode": null` porque `app.reset-code-in-response` no estaba habilitado; `FakeEmailSender` no podía alimentar el `demoInbox` y la pantalla de recuperación no permitía completar el flujo.
+- **Resolución:** `app.reset-code-in-response: true` solo en el perfil `dev`. Verificado en ADB: el correo simulado muestra el código y el cambio de contraseña desde la UI se confirma con `POST /auth/login`.
 
 ### H11 — `spring.application.name` duplicado
 

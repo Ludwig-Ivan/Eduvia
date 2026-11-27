@@ -41,10 +41,12 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.librerias.model.CalendarDate
 import com.example.librerias.model.Meeting
 import com.example.librerias.model.MeetingResponse
 import com.example.librerias.model.SchoolGroup
 import com.example.librerias.model.SchoolTask
+import com.example.librerias.model.longLabel
 import com.example.librerias.model.monthNames
 import com.example.librerias.ui.components.BottomNavBar
 import com.example.librerias.ui.components.BottomTab
@@ -59,6 +61,7 @@ fun TeacherHomeScreen(
     meetings: List<Meeting> = emptyList(),
     tasks: List<SchoolTask> = emptyList(),
     viewModel: MeetingsViewModel,
+    today: CalendarDate,
     userName: String = "",
     groupName: String = "",
     groupSize: Int = 0, // 👈 CAMBIAMOS EL 28 POR 0
@@ -83,7 +86,7 @@ fun TeacherHomeScreen(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column {
-                        Text("Lunes 12 de octubre", fontSize = 13.sp, color = EduviaColors.TextSecondary)
+                        Text(today.longLabel(), fontSize = 13.sp, color = EduviaColors.TextSecondary)
                         Text("Hola, ${userName.substringBefore(" ")}", fontSize = 24.sp, fontWeight = FontWeight.Bold)
                     }
 
