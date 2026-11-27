@@ -1,6 +1,6 @@
 # Hallazgos — EduvIA
 
-> Inventario de **bugs, inconsistencias y código confuso** detectados durante la documentación. Cada hallazgo se describe con archivo, línea, evidencia y propuesta; los que se aplicaron están marcados como **resuelta** (H6, H9, H10, H12 y H14–H16). Si una corrección cambiaría el comportamiento, requiere autorización explícita.
+> Inventario de **bugs, inconsistencias y código confuso** detectados durante la documentación. Cada hallazgo se describe con archivo, línea, evidencia y propuesta; los que se aplicaron están marcados como **resuelta** (H6, H9, H10, H12 y H14–H17). Si una corrección cambiaría el comportamiento, requiere autorización explícita.
 >
 > Los puntos que necesitan decisión también se reflejan en [`backend/OPEN-QUESTIONS.md`](backend/OPEN-QUESTIONS.md) con la marca `⚠️ Por confirmar`.
 
@@ -94,6 +94,12 @@
 - **Archivos y líneas:** `backend/src/main/resources/application-dev.yml` y `backend/.../service/AuthService.kt:65`.
 - **Evidencia:** `POST /auth/reset-code` devolvía `"resetCode": null` porque `app.reset-code-in-response` no estaba habilitado; `FakeEmailSender` no podía alimentar el `demoInbox` y la pantalla de recuperación no permitía completar el flujo.
 - **Resolución:** `app.reset-code-in-response: true` solo en el perfil `dev`. Verificado en ADB: el correo simulado muestra el código y el cambio de contraseña desde la UI se confirma con `POST /auth/login`.
+
+### H17 — Errores de red y de API se mostraban tal cual en la UI
+
+- **Archivos y líneas:** `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/remote/ApiClient.kt` y los ViewModels que mostraban `error.message` directamente.
+- **Evidencia:** con API+BD apagadas el login mostraba `unexpected end of stream on http://10.0.2.2:8080/...`; con solo PostgreSQL apagado se quedaba en «Entrando…» y después mostraba `Socket timeout has expired [url=..., socket_timeout=unknown] ms`. Las pantallas con caché (`RemoteListStore`) se quedaban sin datos y sin aviso.
+- **Resolución:** mapper central `ApiErrors.kt` + `AppError` con tipo y `retryable`; `ApiClient.errorOf/failure`; repositorios y ViewModels propagan el error; `RemoteErrorReporter` publica los fallos de carga y `ErrorBanner` ofrece «Reintentar»/«Entendido». El bloqueo de credenciales usa `AppErrorKind.CREDENTIALS` en vez de comparar texto. Verificado en ADB con los contenedores apagados y restaurados (detalle en [`PRUEBAS-MANUALES.md`](PRUEBAS-MANUALES.md#6-control-de-errores-con-apipostgresql-apagados)); 25 tests KMP en verde.
 
 ### H11 — `spring.application.name` duplicado
 

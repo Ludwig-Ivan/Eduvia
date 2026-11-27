@@ -16,10 +16,15 @@ import kotlinx.coroutines.sync.withLock
  *
  * La caché existe para que la UI pueda observar flujos estables mientras la red responde: el primer
  * suscriptor dispara el `loader`, `filterNotNull` evita emitir una lista vacía antes de la respuesta
- * y los demás suscriptores comparten el mismo estado. Los fallos de carga se ignoran (`runCatching`),
- * conservando el último valor conocido. Todo el estado está en memoria y se protege con [mutex].
+ * y los demás suscriptores comparten el mismo estado. Los fallos de carga conservan el último valor
+ * conocido, pero se informan a [reporter] para que la UI pueda mostrar un aviso de conexión.
+ * Todo el estado está en memoria y se protege con [mutex].
+ *
+ * @param reporter canal compartido donde se publican los fallos de carga.
  */
-internal class RemoteListStore<K, T : Any> {
+internal class RemoteListStore<K, T : Any>(
+    private val reporter: RemoteErrorReporter? = null,
+) {
 
     private val mutex = Mutex()
     private val states = mutableMapOf<K, MutableStateFlow<List<T>?>>()
@@ -42,7 +47,11 @@ internal class RemoteListStore<K, T : Any> {
             count == 0
         }
         try {
-            if (firstSubscriber) runCatching { state.value = loader() }
+            if (firstSubscriber) {
+                runCatching { state.value = loader() }
+                    .onSuccess { reporter?.clear() }
+                    .onFailure { reporter?.report(it) }
+            }
             emitAll(state.filterNotNull().distinctUntilChanged())
         } finally {
             mutex.withLock {
@@ -55,8 +64,12 @@ internal class RemoteListStore<K, T : Any> {
     /** Vuelve a ejecutar el `loader` de [key] y sustituye la caché si la carga tiene éxito. */
     suspend fun refresh(key: K) {
         val loader = mutex.withLock { loaders[key] } ?: return
-        val fresh = runCatching { loader() }.getOrNull() ?: return
-        mutex.withLock { states[key]?.value = fresh }
+        runCatching { loader() }
+            .onSuccess { fresh ->
+                mutex.withLock { states[key]?.value = fresh }
+                reporter?.clear()
+            }
+            .onFailure { reporter?.report(it) }
     }
 
     /** Recarga todas las claves con `loader` registrado (por ejemplo, al cambiar un grupo). */

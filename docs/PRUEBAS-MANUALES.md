@@ -120,7 +120,37 @@ $adb = 'C:\Users\Dev_Ludwig\AppData\Local\Android\Sdk\platform-tools\adb.exe'
 
 Si `adb root` no está disponible en tu AVD, comprueba la alternativa documentada en [`operacion.md`](operacion.md#prueba-manual-con-stack-aislado) o salta esta sección y valida la API con `curl`/Swagger desde el host (sección 3). **`API_PORT=8080` no es una opción en este equipo**: el Apache ajeno ocupa ese puerto.
 
-## 6. Bajar y reiniciar desde cero
+## 6. Control de errores con API/PostgreSQL apagados
+
+La app distingue «sin conexión», «timeout», «servidor no disponible», «credenciales incorrectas», «validación», «no encontrado» y «conflicto». El texto se decide en un único mapper (`ApiErrors.kt`); la UI nunca muestra excepciones de Ktor/OkHttp ni URLs internas.
+
+Con la app ya abierta y la sesión iniciada:
+
+```powershell
+# 1. API y BD apagadas
+docker compose -p miapp-manual stop api postgres
+# En la app: cerrar sesión e iniciar sesión de nuevo →
+# "No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo."
+# En Tareas: banner "Sin conexión" con el mismo mensaje y botones Reintentar/Entendido.
+# Pulsar Reintentar con los contenedores apagados → se mantiene el mismo mensaje.
+
+# 2. Solo PostgreSQL apagado (API arriba)
+docker compose -p miapp-manual start api
+docker compose -p miapp-manual stop postgres
+# Login → "La conexión tardó demasiado. Revisa tu internet e inténtalo de nuevo."
+# (el request expira a los 15 s; la app no se queda en "Entrando…").
+
+# 3. Restaurar y comprobar
+docker compose -p miapp-manual start postgres api
+curl.exe -s http://localhost:18088/actuator/health
+# {"groups":["liveness","readiness"],"status":"UP"}
+```
+
+Tras un `adb reboot` o `adb root` se pierde la redirección: repetir los comandos de `adb root`, `adb reverse tcp:8080 tcp:18088` y la regla `iptables` de la sección 5 antes de repetir la prueba. Si `10.0.2.2:8080` responde con `Server: Apache`, la regla no está activa; sin ella el login puede devolver 404 o un timeout engañoso.
+
+Otros mensajes verificados por contrato (tests con `MockEngine` en `ApiErrorsTest.kt`): 5xx → «El servidor no está disponible en este momento. Inténtalo de nuevo en unos minutos.», 401 en login → «Correo o contraseña incorrectos. Revisa tus datos o recupera tu contraseña.», 404 → «No encontramos lo que buscabas. Puede que ya no esté disponible.»
+
+## 7. Bajar y reiniciar desde cero
 
 ```powershell
 docker compose -p miapp-manual down            # conserva los datos
@@ -129,7 +159,7 @@ docker compose -p miapp-manual down -v --remove-orphans   # borra el volumen: pr
 
 No edites migraciones ya aplicadas: si sale `FlywayValidateException: checksum mismatch`, restaura el archivo original y usa `down -v`.
 
-## 7. Resultado de la verificación en Android (ADB)
+## 8. Resultado de la verificación en Android (ADB)
 
 Ejecutada con `emulator-5554`, `adb root`, `adb reverse --list` → `host-17 tcp:8080 tcp:18088` y el stack `miapp-manual` en `18088/15432`. Ambos contenedores en estado `healthy` y `/actuator/health` en `UP`.
 
@@ -138,6 +168,7 @@ Ejecutada con `emulator-5554`, `adb root`, `adb reverse --list` → `host-17 tcp
 - **Padre:** cambio de asistencia (`ATTENDING` → `DECLINED` → `ATTENDING`) persistido en `meeting_responses(1,1)`.
 - **Recuperación:** en `dev`, `POST /auth/reset-code` devuelve el código y la app lo muestra en `📩 Correo simulado (solo demo)`; el cambio de contraseña desde la UI se confirmó con `POST /auth/login`. La contraseña demo se restauró a `Maestra123` al terminar.
 - **Logs:** sin `ERROR`/excepciones nuevas en la API ni en `logcat` tras las correcciones de fecha y de borrado de eventos.
+- **Control de errores (verificación final, sección 6):** con API+BD apagadas, login y banner de Tareas mostraron el mensaje de conexión; al pulsar «Reintentar» se mantuvo el mismo texto. Con solo PostgreSQL apagado, el login mostró el mensaje de timeout tras ~15 s. Con todo restaurado, el login entró al Inicio con 5 tareas, 3 juntas y 23 eventos; Flyway quedó en `1`, `2`, `1000` con `success = true`. Los contenedores se dejaron `healthy` y `/actuator/health` en `UP`.
 
 > `app.reset-code-in-response: true` está activado **solo** en `application-dev.yml`; en producción el código no se expone en la respuesta.
 

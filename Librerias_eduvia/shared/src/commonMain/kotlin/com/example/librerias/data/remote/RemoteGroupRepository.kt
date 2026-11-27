@@ -18,11 +18,14 @@ import kotlinx.coroutines.flow.Flow
  * locales sin esperar otra petición. Las mutaciones devuelven `AppResult.Error` con el mensaje de
  * la API; las búsquedas por id/código devuelven `null` ante un `ApiException`.
  */
-class RemoteGroupRepository(private val api: ApiClient) : GroupRepository {
+class RemoteGroupRepository(
+    private val api: ApiClient,
+    reporter: RemoteErrorReporter? = null,
+) : GroupRepository {
 
-    private val groups = RemoteListStore<Long, SchoolGroup>()
-    private val parentStudents = RemoteListStore<Long, Student>()
-    private val groupStudents = RemoteListStore<Long, Student>()
+    private val groups = RemoteListStore<Long, SchoolGroup>(reporter)
+    private val parentStudents = RemoteListStore<Long, Student>(reporter)
+    private val groupStudents = RemoteListStore<Long, Student>(reporter)
 
     /**
      * `GET groups?teacherId=` (G1): lee `PageDto<GroupDto>`, mapea cada elemento a [SchoolGroup] y lo
@@ -74,27 +77,33 @@ class RemoteGroupRepository(private val api: ApiClient) : GroupRepository {
         groups.update(teacherId) { current -> if (current.any { it.id == group.id }) current else current + group }
         AppResult.Success(group)
     } catch (e: Exception) {
-        AppResult.Error(api.errorMessage(e))
+        api.failure(e)
     }
 
     /**
      * `GET groups/{id}` (G2): mapea el `GroupDto` a [SchoolGroup] sin tocar las cachés; un 404 u
      * otro error de API se traduce a `null`.
      */
-    override suspend fun findById(id: Long): SchoolGroup? = try {
-        api.get<GroupDto>("groups/$id").toModel()
-    } catch (_: ApiException) {
-        null
+    override suspend fun findById(id: Long): AppResult<SchoolGroup?> = try {
+        AppResult.Success(api.get<GroupDto>("groups/$id").toModel())
+    } catch (e: ApiException) {
+        if (e.status == 404) AppResult.Success(null) else api.failure(e)
+    } catch (e: Exception) {
+        api.failure(e)
     }
 
     /**
      * `GET groups/by-code?code=` (G3): recorta y codifica el código como parámetro de query, mapea
      * el `GroupDto` a [SchoolGroup] y devuelve `null` si la API responde con error (por ejemplo 404).
      */
-    override suspend fun findByCode(code: String): SchoolGroup? = try {
-        api.get<GroupDto>("groups/by-code?code=${code.trim().encodeURLParameter()}").toModel()
-    } catch (_: ApiException) {
-        null
+    override suspend fun findByCode(code: String): AppResult<SchoolGroup?> = try {
+        AppResult.Success(
+            api.get<GroupDto>("groups/by-code?code=${code.trim().encodeURLParameter()}").toModel()
+        )
+    } catch (e: ApiException) {
+        if (e.status == 404) AppResult.Success(null) else api.failure(e)
+    } catch (e: Exception) {
+        api.failure(e)
     }
 
     /**
@@ -122,6 +131,13 @@ class RemoteGroupRepository(private val api: ApiClient) : GroupRepository {
         groups.refreshAll()
         AppResult.Success(student)
     } catch (e: Exception) {
-        AppResult.Error(api.errorMessage(e))
+        api.failure(e)
+    }
+
+    /** Vuelve a descargar todos los listados observados; lo usa el botón de reintento de la UI. */
+    suspend fun refreshAll() {
+        groups.refreshAll()
+        parentStudents.refreshAll()
+        groupStudents.refreshAll()
     }
 }

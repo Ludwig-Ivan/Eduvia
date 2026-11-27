@@ -1,5 +1,6 @@
 package com.example.librerias.data.remote
 
+import com.example.librerias.model.AppErrorKind
 import com.example.librerias.model.AppResult
 import com.example.librerias.model.CalendarDate
 import com.example.librerias.model.CalendarEvent
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.yield
+import kotlinx.io.IOException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -53,6 +55,20 @@ class RemoteRepositoriesTest {
     }
 
     @Test
+    fun comprobaciones_de_auth_con_la_api_apagada_devuelven_error_no_falso() = runBlocking {
+        val api = testApi { throw IOException("unexpected end of stream on http://10.0.2.2:8080/...") }
+        val repo = RemoteAuthRepository(api, api.session)
+
+        val email = repo.emailExists("laura@eduvia.mx")
+        val phone = repo.phoneExists("5512345678")
+        val code = repo.createResetCode("laura@eduvia.mx")
+
+        assertEquals(AppErrorKind.CONNECTION, (email as AppResult.Error).error?.kind)
+        assertEquals(AppErrorKind.CONNECTION, (phone as AppResult.Error).error?.kind)
+        assertEquals(AppErrorKind.CONNECTION, (code as AppResult.Error).error?.kind)
+    }
+
+    @Test
     fun groups_mapea_la_page_y_findByCode_devuelve_null_en_404() = runBlocking {
         val api = testApi { request ->
             when {
@@ -68,7 +84,8 @@ class RemoteRepositoriesTest {
         assertEquals(1, groups.size)
         assertEquals("Matemáticas 6A", groups.first().name)
         assertEquals(1L, groups.first().teacherId)
-        assertEquals(null, repo.findByCode("NO-EXISTE"))
+        val notFound = repo.findByCode("NO-EXISTE")
+        assertTrue(notFound is AppResult.Success<*> && notFound.value == null)
     }
 
     @Test

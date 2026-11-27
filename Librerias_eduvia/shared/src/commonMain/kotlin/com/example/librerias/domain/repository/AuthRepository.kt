@@ -37,22 +37,23 @@ interface AuthRepository {
 
     /**
      * Consulta si [email] ya pertenece a una cuenta.
-     * @return `true` si el correo está en uso.
+     * @return `true` si el correo está en uso, o `AppResult.Error` si no se pudo consultar.
      */
-    suspend fun emailExists(email: String): Boolean
+    suspend fun emailExists(email: String): AppResult<Boolean>
 
     /**
      * Consulta si [phone] ya pertenece a una cuenta.
-     * @return `true` si el celular está en uso.
+     * @return `true` si el celular está en uso, o `AppResult.Error` si no se pudo consultar.
      */
-    suspend fun phoneExists(phone: String): Boolean
+    suspend fun phoneExists(phone: String): AppResult<Boolean>
 
     /**
      * Genera y guarda un código de recuperación. Devuelve null si el correo no existe.
      * En la demo el código vence en 10 minutos, admite 5 intentos y uno nuevo reemplaza al anterior.
-     * @return el código de 6 dígitos para [email], o null si no tiene cuenta.
+     * @return el código de 6 dígitos para [email], null si no tiene cuenta, o `AppResult.Error`
+     * si la API no respondió (para no mostrar un envío falso).
      */
-    suspend fun createResetCode(email: String): String?
+    suspend fun createResetCode(email: String): AppResult<String?>
 
     /**
      * Cambia la contraseña de [email] si [code] sigue siendo válido.

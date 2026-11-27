@@ -1,6 +1,7 @@
 package com.example.librerias.data.remote
 
 import com.example.librerias.domain.repository.CalendarRepository
+import com.example.librerias.model.AppFailureException
 import com.example.librerias.model.CalendarEvent
 import com.example.librerias.model.CalendarEventType
 import com.example.librerias.model.UserRole
@@ -15,9 +16,12 @@ import kotlinx.coroutines.flow.Flow
  * `attendance` y la del padre no. Las operaciones que van a la red propagan `ApiException`; los
  * fallos al cargar el flujo se ignoran y conservan el último listado conocido.
  */
-class RemoteCalendarRepository(private val api: ApiClient) : CalendarRepository {
+class RemoteCalendarRepository(
+    private val api: ApiClient,
+    reporter: RemoteErrorReporter? = null,
+) : CalendarRepository {
 
-    private val byRole = RemoteListStore<UserRole, CalendarEvent>()
+    private val byRole = RemoteListStore<UserRole, CalendarEvent>(reporter)
 
     /**
      * `GET calendar/events?role=&page=&size=` (C1): mapea `PageDto<CalendarEventDto>` a
@@ -36,7 +40,7 @@ class RemoteCalendarRepository(private val api: ApiClient) : CalendarRepository 
      * TASK y MEETING el backend ya creó el evento con la tarea/junta, así que solo se actualiza la
      * caché local. Propaga errores de la API en el caso EXAM.
      */
-    override suspend fun addEvent(event: CalendarEvent) {
+    override suspend fun addEvent(event: CalendarEvent) = try {
         if (event.type == CalendarEventType.EXAM) {
             val dto: CalendarEventDto = api.post("calendar/events", event.toCreateRequest())
             upsert(dto.toModel())
@@ -44,15 +48,19 @@ class RemoteCalendarRepository(private val api: ApiClient) : CalendarRepository 
             // TASK y MEETING: el evento ya existe en el backend, solo refrescamos la caché local.
             upsert(event)
         }
+    } catch (e: Exception) {
+        throw AppFailureException(api.errorOf(e))
     }
 
     /**
      * `DELETE calendar/events/{id}` (C3, sin cuerpo): tras el borrado remoto retira el evento de las
      * cachés de todos los roles. Propaga errores de la API.
      */
-    override suspend fun deleteEvent(eventId: Long) {
+    override suspend fun deleteEvent(eventId: Long) = try {
         api.deleteNoContent("calendar/events/$eventId")
         removeLocalEvent(eventId)
+    } catch (e: Exception) {
+        throw AppFailureException(api.errorOf(e))
     }
 
     /** Recarga todos los listados de eventos cacheados (lo usan los repositorios de juntas y tareas). */

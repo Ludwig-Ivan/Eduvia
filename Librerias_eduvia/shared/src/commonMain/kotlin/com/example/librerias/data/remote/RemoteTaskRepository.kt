@@ -1,6 +1,7 @@
 package com.example.librerias.data.remote
 
 import com.example.librerias.domain.repository.TaskRepository
+import com.example.librerias.model.AppFailureException
 import com.example.librerias.model.AppResult
 import com.example.librerias.model.SchoolTask
 import kotlinx.coroutines.flow.Flow
@@ -17,9 +18,10 @@ import kotlinx.coroutines.flow.Flow
 class RemoteTaskRepository(
     private val api: ApiClient,
     private val calendar: RemoteCalendarRepository? = null,
+    reporter: RemoteErrorReporter? = null,
 ) : TaskRepository {
 
-    private val byGroup = RemoteListStore<Long, SchoolTask>()
+    private val byGroup = RemoteListStore<Long, SchoolTask>(reporter)
 
     /**
      * `GET tasks?groupId=` (T1): lee `PageDto<TaskDto>` y mapea cada tarea a [SchoolTask], cacheando
@@ -36,13 +38,15 @@ class RemoteTaskRepository(
      * a la caché del grupo. El backend crea en la misma transacción el evento de calendario con el
      * mismo id, así que no se hace otra llamada. Propaga errores de la API.
      */
-    override suspend fun addTask(task: SchoolTask): SchoolTask {
+    override suspend fun addTask(task: SchoolTask): SchoolTask = try {
         val dto: TaskDto = api.post("tasks", task.toCreateRequest())
         val saved = dto.toModel()
         byGroup.update(saved.groupId) { current ->
             if (current.any { it.id == saved.id }) current else current + saved
         }
-        return saved
+        saved
+    } catch (e: Exception) {
+        throw AppFailureException(api.errorOf(e))
     }
 
     /**
@@ -50,12 +54,15 @@ class RemoteTaskRepository(
      * entrada correspondiente en la caché del grupo. El backend actualiza el evento de calendario,
      * por lo que se refresca la caché del calendario si está disponible. Propaga errores de la API.
      */
-    override suspend fun updateTask(task: SchoolTask) {
+    override suspend fun updateTask(task: SchoolTask) = try {
         val dto: TaskDto = api.put("tasks/${task.id}", task.toUpdateRequest())
         val saved = dto.toModel()
         byGroup.update(saved.groupId) { current -> current.map { if (it.id == saved.id) saved else it } }
         // El backend también actualiza el evento de calendario.
         calendar?.refreshEvents()
+        Unit
+    } catch (e: Exception) {
+        throw AppFailureException(api.errorOf(e))
     }
 
     /**
@@ -69,7 +76,7 @@ class RemoteTaskRepository(
         byGroup.update(updated.groupId) { current -> current.map { if (it.id == updated.id) updated else it } }
         AppResult.Success(Unit)
     } catch (e: Exception) {
-        AppResult.Error(api.errorMessage(e))
+        api.failure(e)
     }
 
     /**
@@ -77,7 +84,7 @@ class RemoteTaskRepository(
      * tarea de la caché de ese grupo (o de todas si no se pudo leer el detalle) y elimina el evento
      * de calendario con el mismo id. El GET fallido se ignora; el DELETE propaga errores de la API.
      */
-    override suspend fun deleteTask(taskId: Long) {
+    override suspend fun deleteTask(taskId: Long) = try {
         val existing = runCatching { api.get<TaskDto>("tasks/$taskId").toModel() }.getOrNull()
         api.deleteNoContent("tasks/$taskId")
         if (existing != null) {
@@ -86,5 +93,11 @@ class RemoteTaskRepository(
             byGroup.removeWhereAll { it.id == taskId }
         }
         calendar?.removeLocalEvent(taskId)
+        Unit
+    } catch (e: Exception) {
+        throw AppFailureException(api.errorOf(e))
     }
+
+    /** Vuelve a descargar los listados observados; lo usa el botón de reintento de la UI. */
+    suspend fun refreshAll() = byGroup.refreshAll()
 }

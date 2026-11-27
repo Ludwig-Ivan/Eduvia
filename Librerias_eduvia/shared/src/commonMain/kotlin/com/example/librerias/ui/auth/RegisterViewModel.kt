@@ -26,6 +26,11 @@ class RegisterViewModel(private val container: AppContainer) : ViewModel() {
 
     fun clearError() { _error.value = null }
 
+    /** Fallo inesperado (red caída, excepción no mapeada): mensaje seguro y en español. */
+    private fun showFailure(error: Exception) {
+        _error.value = container.errorMessage(error)
+    }
+
     /** Paso 1: formato + correo y celular que no existan ya. */
     fun validateStep1(
         fullName: String, email: String, phone: String,
@@ -36,11 +41,16 @@ class RegisterViewModel(private val container: AppContainer) : ViewModel() {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
-            when (val r = container.validateAccountStep(fullName, email, phone, password, confirmPassword)) {
-                is AppResult.Success -> onValid()
-                is AppResult.Error -> _error.value = r.message
+            try {
+                when (val r = container.validateAccountStep(fullName, email, phone, password, confirmPassword)) {
+                    is AppResult.Success -> onValid()
+                    is AppResult.Error -> _error.value = r.message
+                }
+            } catch (e: Exception) {
+                showFailure(e)
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 
@@ -58,11 +68,16 @@ class RegisterViewModel(private val container: AppContainer) : ViewModel() {
                 password = password, confirmPassword = confirmPassword, acceptedTerms = acceptedTerms,
                 children = children, groups = emptyList()
             )
-            when (val result = container.register(input)) {
-                is AppResult.Success -> onSuccess()
-                is AppResult.Error -> _error.value = result.message
+            try {
+                when (val result = container.register(input)) {
+                    is AppResult.Success -> onSuccess()
+                    is AppResult.Error -> _error.value = result.message
+                }
+            } catch (e: Exception) {
+                showFailure(e)
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 
@@ -81,11 +96,16 @@ class RegisterViewModel(private val container: AppContainer) : ViewModel() {
                 children = emptyList(),
                 groups = groups.map { GroupInput(it.groupName, it.schoolName, it.subject) }
             )
-            when (val result = container.register(input)) {
-                is AppResult.Success -> onSuccess(result.value)
-                is AppResult.Error -> _error.value = result.message
+            try {
+                when (val result = container.register(input)) {
+                    is AppResult.Success -> onSuccess(result.value)
+                    is AppResult.Error -> _error.value = result.message
+                }
+            } catch (e: Exception) {
+                showFailure(e)
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 }

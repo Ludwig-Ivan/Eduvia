@@ -145,7 +145,11 @@ class CreateTaskUseCase(
             ?: return AppResult.Error("La fecha no es válida. Ejemplo: 13/10/2026.")
         if (dueDate.isBefore(now)) return AppResult.Error("La fecha de entrega no puede ser anterior a hoy.")
 
-        val group = groups.findById(groupId) ?: return AppResult.Error("No encontramos el grupo.")
+        val group = when (val found = groups.findById(groupId)) {
+            is AppResult.Error -> return found
+            is AppResult.Success -> found.value
+                ?: return AppResult.Error("No encontramos el grupo.")
+        }
 
         val saved = tasks.addTask(
             SchoolTask(

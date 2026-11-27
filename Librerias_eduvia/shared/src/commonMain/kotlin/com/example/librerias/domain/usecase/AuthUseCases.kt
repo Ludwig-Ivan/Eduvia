@@ -93,10 +93,18 @@ class ValidateAccountStepUseCase(private val auth: AuthRepository) {
         }
         if (formatError != null) return AppResult.Error(formatError)
 
-        if (auth.emailExists(email))
-            return AppResult.Error("Ya existe una cuenta con ese correo. Inicia sesión o recupera tu contraseña.")
-        if (auth.phoneExists(phone))
-            return AppResult.Error("Ese número de celular ya está registrado en otra cuenta.")
+        when (val emailExists = auth.emailExists(email.trim())) {
+            is AppResult.Error -> return emailExists
+            is AppResult.Success -> if (emailExists.value) {
+                return AppResult.Error("Ya existe una cuenta con ese correo. Inicia sesión o recupera tu contraseña.")
+            }
+        }
+        when (val phoneExists = auth.phoneExists(phone.trim())) {
+            is AppResult.Error -> return phoneExists
+            is AppResult.Success -> if (phoneExists.value) {
+                return AppResult.Error("Ese número de celular ya está registrado en otra cuenta.")
+            }
+        }
         return AppResult.Success(Unit)
     }
 }
@@ -136,10 +144,13 @@ class RegisterUseCase(
         // Padres: verifica los códigos ANTES de crear la cuenta
         if (input.role == UserRole.PARENT) {
             for (child in input.children) {
-                if (groups.findByCode(child.classCode) == null) {
-                    return AppResult.Error(
-                        "El código ${child.classCode.trim()} no existe. Pídele el correcto al maestro."
-                    )
+                when (val found = groups.findByCode(child.classCode)) {
+                    is AppResult.Error -> return found
+                    is AppResult.Success -> if (found.value == null) {
+                        return AppResult.Error(
+                            "El código ${child.classCode.trim()} no existe. Pídele el correcto al maestro."
+                        )
+                    }
                 }
             }
         }
@@ -208,8 +219,13 @@ class SendResetCodeUseCase(
      */
     suspend operator fun invoke(email: String): AppResult<Unit> {
         if (!Validators.isValidEmail(email)) return AppResult.Error("Escribe un correo válido.")
-        val code = auth.createResetCode(email.trim())
-        if (code != null) sender.sendResetCode(email.trim(), code)
+        when (val result = auth.createResetCode(email.trim())) {
+            is AppResult.Error -> return result
+            is AppResult.Success -> {
+                val code = result.value
+                if (code != null) sender.sendResetCode(email.trim(), code)
+            }
+        }
         // Misma respuesta exista o no el correo, para no revelar quién tiene cuenta.
         return AppResult.Success(Unit)
     }

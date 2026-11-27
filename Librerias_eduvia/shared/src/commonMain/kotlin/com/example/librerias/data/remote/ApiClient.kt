@@ -1,5 +1,7 @@
 package com.example.librerias.data.remote
 
+import com.example.librerias.model.AppError
+import com.example.librerias.model.AppResult
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
@@ -19,7 +21,6 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
 /**
@@ -47,6 +48,7 @@ class ApiException(
     val status: Int,
     override val message: String,
     val problem: ProblemDto? = null,
+    val path: String? = null,
 ) : RuntimeException(message)
 
 /**
@@ -114,7 +116,7 @@ class ApiClient(
         if (response.status.value == 401 && session.refreshToken.value != null && path != "auth/refresh") {
             if (refreshTokens()) response = execute(method, path, body)
         }
-        if (!response.status.isSuccess()) throw response.toApiException()
+        if (!response.status.isSuccess()) throw response.toApiException(path)
         return response.body()
     }
 
@@ -130,7 +132,7 @@ class ApiClient(
      */
     suspend fun postNoContent(path: String, body: Any? = null) {
         val response = postRaw(path, body)
-        if (!response.status.isSuccess()) throw response.toApiException()
+        if (!response.status.isSuccess()) throw response.toApiException(path)
     }
 
     /**
@@ -139,7 +141,7 @@ class ApiClient(
      */
     suspend fun deleteNoContent(path: String) {
         val response = execute(HttpMethod.Delete, path)
-        if (!response.status.isSuccess()) throw response.toApiException()
+        if (!response.status.isSuccess()) throw response.toApiException(path)
     }
 
     /**
@@ -182,7 +184,7 @@ class ApiClient(
      * `title`, texto en crudo o un `Error <status>` genérico.
      */
     @PublishedApi
-    internal suspend fun HttpResponse.toApiException(): ApiException {
+    internal suspend fun HttpResponse.toApiException(path: String): ApiException {
         val text = bodyAsText()
         val problem = runCatching { json.decodeFromString<ProblemDto>(text) }.getOrNull()
         val message = problem?.detail
@@ -190,19 +192,23 @@ class ApiClient(
             ?: problem?.title
             ?: text.takeIf { it.isNotBlank() }
             ?: "Error ${status.value}"
-        return ApiException(status.value, message, problem)
+        return ApiException(status.value, message, problem, path)
     }
 
     /**
-     * Texto de error para la UI: usa el mensaje de [ApiException], sustituye los fallos de
-     * serialización por «Respuesta inesperada del servidor» y, si no hay mensaje, indica que no se
-     * pudo conectar con el servidor.
+     * Error estructurado para la UI. Centraliza la clasificación de red, timeouts, sesión,
+     * credenciales, validación y errores del servidor en [ApiErrors].
      */
-    fun errorMessage(error: Throwable): String = when (error) {
-        is ApiException -> error.message
-        is SerializationException -> "Respuesta inesperada del servidor"
-        else -> error.message ?: "No se pudo conectar con el servidor"
+    fun errorOf(error: Throwable): AppError = ApiErrors.from(error)
+
+    /** `AppResult.Error` con mensaje amigable y el [AppError] original, para los repositorios. */
+    fun failure(error: Throwable): AppResult.Error {
+        val appError = errorOf(error)
+        return AppResult.Error(appError.message, appError)
     }
+
+    /** Texto listo para mostrar. Se conserva por compatibilidad; delega en [errorOf]. */
+    fun errorMessage(error: Throwable): String = errorOf(error).message
 }
 
 /**

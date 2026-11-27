@@ -1,6 +1,7 @@
 package com.example.librerias.data.remote
 
 import com.example.librerias.domain.repository.MeetingRepository
+import com.example.librerias.model.AppFailureException
 import com.example.librerias.model.FamilyResponse
 import com.example.librerias.model.MEETING_ID_OFFSET
 import com.example.librerias.model.Meeting
@@ -23,12 +24,13 @@ class RemoteMeetingRepository(
     private val api: ApiClient,
     private val groups: RemoteGroupRepository? = null,
     private val calendar: RemoteCalendarRepository? = null,
+    reporter: RemoteErrorReporter? = null,
 ) : MeetingRepository {
 
-    private val meetings = RemoteListStore<Unit, Meeting>()
-    private val attendance = RemoteListStore<Long, FamilyResponse>()
+    private val meetings = RemoteListStore<Unit, Meeting>(reporter)
+    private val attendance = RemoteListStore<Long, FamilyResponse>(reporter)
     // Se guarda como lista de pares porque RemoteListStore trabaja con listas.
-    private val responses = RemoteListStore<Long, Pair<Long, MeetingResponse>>()
+    private val responses = RemoteListStore<Long, Pair<Long, MeetingResponse>>(reporter)
 
     /**
      * `GET meetings?page=&size=` (M1): mapea `PageDto<MeetingDto>` a [Meeting] y cachea la lista bajo
@@ -88,14 +90,16 @@ class RemoteMeetingRepository(
      * reemplaza en la caché de juntas. El backend crea el evento de calendario `1000 + id` en la
      * misma transacción. Propaga errores de la API.
      */
-    override suspend fun addMeeting(meeting: Meeting): Meeting {
+    override suspend fun addMeeting(meeting: Meeting): Meeting = try {
         val dto: MeetingDto = api.post("meetings", meeting.toCreateRequest())
         val saved = dto.toModel()
         meetings.update(Unit) { current ->
             if (current.any { it.id == saved.id }) current.map { if (it.id == saved.id) saved else it }
             else current + saved
         }
-        return saved
+        saved
+    } catch (e: Exception) {
+        throw AppFailureException(api.errorOf(e))
     }
 
     /**
@@ -103,12 +107,14 @@ class RemoteMeetingRepository(
      * reemplaza su entrada en la caché. Después refresca la caché de calendario (si está disponible)
      * porque el backend actualiza el evento `1000 + id`. Propaga errores de la API.
      */
-    override suspend fun updateMeeting(meeting: Meeting): Meeting {
+    override suspend fun updateMeeting(meeting: Meeting): Meeting = try {
         val dto: MeetingDto = api.put("meetings/${meeting.id}", meeting.toUpdateRequest())
         val saved = dto.toModel()
         meetings.update(Unit) { current -> current.map { if (it.id == saved.id) saved else it } }
         calendar?.refreshEvents()
-        return saved
+        saved
+    } catch (e: Exception) {
+        throw AppFailureException(api.errorOf(e))
     }
 
     /**
@@ -116,7 +122,7 @@ class RemoteMeetingRepository(
      * del enum. Vuelve a cargar la asistencia de la junta, actualiza las respuestas cacheadas de todos
      * los alumnos para ese `meetingId` y refresca el calendario. Propaga errores de la API.
      */
-    override suspend fun setResponse(meetingId: Long, studentId: Long, response: MeetingResponse) {
+    override suspend fun setResponse(meetingId: Long, studentId: Long, response: MeetingResponse) = try {
         api.put<MeetingDto>(
             "meetings/$meetingId/responses/$studentId",
             SetResponseRequestDto(response.name),
@@ -126,25 +132,41 @@ class RemoteMeetingRepository(
             current.map { (id, value) -> if (id == meetingId) id to response else id to value }
         }
         calendar?.refreshEvents()
+        Unit
+    } catch (e: Exception) {
+        throw AppFailureException(api.errorOf(e))
     }
 
     /**
      * `POST meetings/{id}/reminders` (M8): lee [PendingDto] y devuelve el número de familias
      * pendientes. No modifica las cachés; propaga errores de la API.
      */
-    override suspend fun remindPending(meetingId: Long): Int =
+    override suspend fun remindPending(meetingId: Long): Int = try {
         api.post<PendingDto>("meetings/$meetingId/reminders").pending
+    } catch (e: Exception) {
+        throw AppFailureException(api.errorOf(e))
+    }
 
     /**
      * `DELETE meetings/{id}` (M4, sin cuerpo): elimina la junta de la caché, vacía su asistencia,
      * retira esa junta de las respuestas cacheadas de todos los alumnos y elimina del calendario el
      * evento con id `MEETING_ID_OFFSET + meetingId`. Propaga errores de la API.
      */
-    override suspend fun deleteMeeting(meetingId: Long) {
+    override suspend fun deleteMeeting(meetingId: Long) = try {
         api.deleteNoContent("meetings/$meetingId")
         meetings.update(Unit) { current -> current.filterNot { it.id == meetingId } }
         attendance.update(meetingId) { emptyList() }
         responses.updateAll { current -> current.filterNot { (id, _) -> id == meetingId } }
         calendar?.removeLocalEvent(MEETING_ID_OFFSET + meetingId)
+        Unit
+    } catch (e: Exception) {
+        throw AppFailureException(api.errorOf(e))
+    }
+
+    /** Vuelve a descargar juntas, asistencia y respuestas; lo usa el botón de reintento de la UI. */
+    suspend fun refreshAll() {
+        meetings.refreshAll()
+        attendance.refreshAll()
+        responses.refreshAll()
     }
 }

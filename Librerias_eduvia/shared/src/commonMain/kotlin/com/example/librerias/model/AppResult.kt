@@ -5,6 +5,9 @@ sealed interface AppResult<out T> {
     /** Operación correcta: expone el valor devuelto por el caso de uso. */
     data class Success<out T>(val value: T) : AppResult<T>
 
-    /** Operación fallida: expone un mensaje listo para mostrar en la UI. */
-    data class Error(val message: String) : AppResult<Nothing>
+    /**
+     * Operación fallida: expone un mensaje listo para mostrar en la UI y, cuando viene de la red,
+     * el [AppError] que permite a la UI decidir si ofrece reintento.
+     */
+    data class Error(val message: String, val error: AppError? = null) : AppResult<Nothing>
 }

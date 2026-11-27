@@ -112,6 +112,8 @@ sequenceDiagram
 - El backend responde `ProblemDetail` (RFC 9457) desde `GlobalExceptionHandler.kt`: `type`, `title`, `status`, `detail`, `instance` y `properties.errors`; `Content-Type: application/problem+json`. Un 404 real verificado es `{"detail":"Grupo no encontrado","status":404,"title":"Not Found","errors":[]}`.
 - Códigos habituales: 400 validación, 401 sin token o refresh inválido, 404 recurso inexistente, 409 conflicto (email/teléfono duplicado, junta repetida, código de clase inexistente). El cuerpo de 500 no expone detalles internos.
 - En la app, `ApiClient.kt` parsea `ProblemDto` y convierte fallos de red, timeout y códigos HTTP en `ApiException` / `AppResult.Error(message)` para los ViewModels. El contrato de errores y su compatibilidad están en [`backend/api-contract.md`](backend/api-contract.md) y [`backend/compat-report.md`](backend/compat-report.md); la explicación para estudiantes, en [`guias/api-rest.md`](guias/api-rest.md).
+- El texto visible se decide en un único lugar, `ApiErrors.kt`, que produce `AppError(kind, message, retryable)` con tipos `CONNECTION`, `TIMEOUT`, `SERVER`, `SESSION`, `CREDENTIALS`, `VALIDATION`, `NOT_FOUND`, `CONFLICT` y `UNEXPECTED`. Los ViewModels muestran ese mensaje y nunca el texto de la excepción de Ktor/OkHttp; el bloqueo de login depende del tipo `CREDENTIALS`, no de comparar cadenas.
+- Los fallos al cargar listas conservan la caché y se publican en `RemoteErrorReporter`; `AppNavHost` pinta `ErrorBanner` con «Reintentar» y «Entendido». Los timeouts de petición/connection son 15 s / 10 s. La verificación con contenedores apagados está en [`PRUEBAS-MANUALES.md`](PRUEBAS-MANUALES.md#6-control-de-errores-con-apipostgresql-apagados).
 
 ## Paginación
 

@@ -1,5 +1,8 @@
 package com.example.librerias.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,8 +41,11 @@ import com.example.librerias.ui.tasks.TasksViewModel
 import com.example.librerias.ui.tasks.TeacherTasksScreen
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
 import kotlinx.coroutines.delay
+import com.example.librerias.model.AppError
 import com.example.librerias.ui.auth.LoginViewModel
+import com.example.librerias.ui.components.ErrorBanner
 /**
  * Nodo raíz de navegación: elige las pantallas según la sesión y el rol del usuario.
  *
@@ -84,6 +90,7 @@ fun AppNavHost(container: AppContainer) {
     var fechaParaNuevaJunta by remember { mutableStateOf("") }
 
     var reminderMessage by remember { mutableStateOf<String?>(null) }
+    var reminderError by remember { mutableStateOf<AppError?>(null) }
 
 // El aviso verde se quita solo a los 3 segundos
     LaunchedEffect(reminderMessage) {
@@ -189,6 +196,35 @@ fun AppNavHost(container: AppContainer) {
         val meetingError by meetingsVm.creationError.collectAsState()
         val taskError by tasksVm.creationError.collectAsState()
 
+        // Aviso global: fallos de carga (API/BD apagadas) y acciones que no se pudieron guardar.
+        val loadError by container.loadError.collectAsState(initial = null)
+        val taskActionError by tasksVm.actionError.collectAsState()
+        val meetingActionError by meetingsVm.actionError.collectAsState()
+        val calendarActionError by calendarVm.actionError.collectAsState()
+        val bannerError = loadError ?: taskActionError ?: meetingActionError
+            ?: calendarActionError ?: reminderError
+
+        Column(modifier = Modifier.fillMaxSize()) {
+            ErrorBanner(
+                error = bannerError,
+                onRetry = {
+                    scope.launch {
+                        container.retryLoads()
+                        tasksVm.clearActionError()
+                        meetingsVm.clearActionError()
+                        calendarVm.clearActionError()
+                        reminderError = null
+                    }
+                },
+                onDismiss = {
+                    container.clearLoadError()
+                    tasksVm.clearActionError()
+                    meetingsVm.clearActionError()
+                    calendarVm.clearActionError()
+                    reminderError = null
+                },
+            )
+            Box(modifier = Modifier.weight(1f)) {
         if (showCreateMeeting) {
             CreateMeetingScreen(
                 meetingToEdit = meetingToEdit,
@@ -385,11 +421,17 @@ fun AppNavHost(container: AppContainer) {
                             onEditMeeting = { meetingToEdit = it; showCreateMeeting = true },
                             onRemind = { meeting ->
                                 scope.launch {
-                                    val n = container.remindPending(meeting.id)
-                                    reminderMessage = when (n) {
-                                        0 -> "Todas las familias ya respondieron."
-                                        1 -> "Recordatorio enviado a 1 familia."
-                                        else -> "Recordatorio enviado a $n familias."
+                                    reminderError = null
+                                    try {
+                                        val n = container.remindPending(meeting.id)
+                                        reminderMessage = when (n) {
+                                            0 -> "Todas las familias ya respondieron."
+                                            1 -> "Recordatorio enviado a 1 familia."
+                                            else -> "Recordatorio enviado a $n familias."
+                                        }
+                                    } catch (e: Exception) {
+                                        reminderMessage = null
+                                        reminderError = container.errorOf(e)
                                     }
                                 }
                             },
@@ -416,6 +458,8 @@ fun AppNavHost(container: AppContainer) {
                     }
                 }
             }
+            }
         }
     }
+}
 }

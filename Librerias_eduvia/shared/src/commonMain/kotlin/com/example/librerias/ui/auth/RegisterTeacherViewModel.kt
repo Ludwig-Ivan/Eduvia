@@ -58,11 +58,16 @@ class RegisterTeacherViewModel(private val container: AppContainer) : ViewModel(
                 groups = groups.map { com.example.librerias.model.GroupInput(it.groupName, it.schoolName, it.subject) }
             )
 
-            when (val result = container.register(input)) {
-                is AppResult.Success -> onSuccess()
-                is AppResult.Error -> _error.value = result.message
+            try {
+                when (val result = container.register(input)) {
+                    is AppResult.Success -> onSuccess()
+                    is AppResult.Error -> _error.value = result.message
+                }
+            } catch (e: Exception) {
+                _error.value = container.errorMessage(e)
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 }

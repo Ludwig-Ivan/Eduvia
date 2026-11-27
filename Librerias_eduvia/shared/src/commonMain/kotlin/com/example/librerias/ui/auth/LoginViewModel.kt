@@ -3,6 +3,7 @@ package com.example.librerias.ui.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.librerias.di.AppContainer
+import com.example.librerias.model.AppErrorKind
 import com.example.librerias.model.AppResult
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,18 +36,27 @@ class LoginViewModel(private val container: AppContainer) : ViewModel() {
             _isLoading.value = true
             _error.value = null
 
-            when (val r = container.login(email, password)) {
-                // Si sale bien, la sesión cambia y AppNavHost abre la pantalla principal solo.
-                is AppResult.Success -> failedAttempts = 0
-                is AppResult.Error -> {
-                    _error.value = r.message
-                    if (r.message.startsWith("Correo o contraseña")) {
-                        failedAttempts++
-                        if (failedAttempts >= 5) startLock()
+            try {
+                when (val r = container.login(email, password)) {
+                    // Si sale bien, la sesión cambia y AppNavHost abre la pantalla principal solo.
+                    is AppResult.Success -> failedAttempts = 0
+                    is AppResult.Error -> {
+                        _error.value = r.message
+                        // Solo cuentan las credenciales incorrectas: un fallo de red no debe
+                        // bloquear al usuario ni agotar sus intentos.
+                        if (r.error?.kind == AppErrorKind.CREDENTIALS ||
+                            r.message.startsWith("Correo o contraseña")
+                        ) {
+                            failedAttempts++
+                            if (failedAttempts >= 5) startLock()
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                _error.value = container.errorMessage(e)
+            } finally {
+                _isLoading.value = false
             }
-            _isLoading.value = false
         }
     }
 

@@ -44,17 +44,21 @@ class ForgotPasswordViewModel(private val container: AppContainer) : ViewModel()
         viewModelScope.launch {
             _state.update { it.copy(isSending = true, error = null, info = null) }
             container.clearDemoInbox()
-            when (val r = container.sendResetCode(email)) {
-                is AppResult.Success -> {
-                    _state.update {
-                        it.copy(
-                            isSending = false,
-                            info = "Si el correo está registrado, te enviamos un código. Vence en 10 minutos."
-                        )
+            try {
+                when (val r = container.sendResetCode(email)) {
+                    is AppResult.Success -> {
+                        _state.update {
+                            it.copy(
+                                isSending = false,
+                                info = "Si el correo está registrado, te enviamos un código. Vence en 10 minutos."
+                            )
+                        }
+                        startCooldown()
                     }
-                    startCooldown()
+                    is AppResult.Error -> _state.update { it.copy(isSending = false, error = r.message) }
                 }
-                is AppResult.Error -> _state.update { it.copy(isSending = false, error = r.message) }
+            } catch (e: Exception) {
+                _state.update { it.copy(isSending = false, error = container.errorMessage(e)) }
             }
         }
     }
@@ -73,9 +77,13 @@ class ForgotPasswordViewModel(private val container: AppContainer) : ViewModel()
         if (_state.value.isResetting) return
         viewModelScope.launch {
             _state.update { it.copy(isResetting = true, error = null) }
-            when (val r = container.resetPassword(email, code.trim(), newPassword, confirmPassword)) {
-                is AppResult.Success -> _state.update { it.copy(isResetting = false, done = true, info = null) }
-                is AppResult.Error -> _state.update { it.copy(isResetting = false, error = r.message) }
+            try {
+                when (val r = container.resetPassword(email, code.trim(), newPassword, confirmPassword)) {
+                    is AppResult.Success -> _state.update { it.copy(isResetting = false, done = true, info = null) }
+                    is AppResult.Error -> _state.update { it.copy(isResetting = false, error = r.message) }
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(isResetting = false, error = container.errorMessage(e)) }
             }
         }
     }

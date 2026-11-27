@@ -15,8 +15,9 @@ import kotlinx.coroutines.launch
  * Implementación del contrato de dominio [AuthRepository] sobre HTTP: consume los endpoints de
  * autenticación (A1, A2, A4-A8; A3 lo renueva [ApiClient]) y mantiene [SessionStore] sincronizado
  * con el usuario y los tokens. No usa caché de listados;
- * los errores de red o del backend se devuelven como `AppResult.Error` con el mensaje de
- * [ApiClient.errorMessage] (las comprobaciones de existencia devuelven `false`).
+ * los errores de red o del backend se devuelven como `AppResult.Error` con un [AppError] amigable
+ * generado por [ApiClient.failure]. Las comprobaciones de existencia ya no devuelven `false` cuando
+ * la API está caída: devuelven el error para no mostrar un éxito falso.
  */
 class RemoteAuthRepository(
     private val api: ApiClient,
@@ -41,7 +42,7 @@ class RemoteAuthRepository(
         session.setUser(user)
         AppResult.Success(user)
     } catch (e: Exception) {
-        AppResult.Error(api.errorMessage(e))
+        api.failure(e)
     }
 
     /**
@@ -74,42 +75,47 @@ class RemoteAuthRepository(
         session.setUser(user)
         AppResult.Success(user)
     } catch (e: Exception) {
-        AppResult.Error(api.errorMessage(e))
+        api.failure(e)
     }
 
     /**
      * `GET auth/exists/email` (A5): codifica el email como parámetro de query y lee [ExistsDto].
-     * Sin caché; un error de API (`ApiException`) se interpreta como `false`.
+     * Sin caché. Si la petición falla se devuelve el error, no `false`.
      */
-    override suspend fun emailExists(email: String): Boolean = try {
-        api.get<ExistsDto>("auth/exists/email?email=${email.encodeURLParameter()}").exists
-    } catch (e: ApiException) {
-        false
+    override suspend fun emailExists(email: String): AppResult<Boolean> = try {
+        AppResult.Success(
+            api.get<ExistsDto>("auth/exists/email?email=${email.encodeURLParameter()}").exists
+        )
+    } catch (e: Exception) {
+        api.failure(e)
     }
 
     /**
      * `GET auth/exists/phone` (A6): codifica el teléfono como parámetro de query y lee [ExistsDto].
-     * Sin caché; un error de API (`ApiException`) se interpreta como `false`.
+     * Sin caché. Si la petición falla se devuelve el error, no `false`.
      */
-    override suspend fun phoneExists(phone: String): Boolean = try {
-        api.get<ExistsDto>("auth/exists/phone?phone=${phone.encodeURLParameter()}").exists
-    } catch (e: ApiException) {
-        false
+    override suspend fun phoneExists(phone: String): AppResult<Boolean> = try {
+        AppResult.Success(
+            api.get<ExistsDto>("auth/exists/phone?phone=${phone.encodeURLParameter()}").exists
+        )
+    } catch (e: Exception) {
+        api.failure(e)
     }
 
     /**
      * `POST auth/reset-code` (A7): devuelve el `resetCode` que el backend incluye solo en `dev` para
-     * el buzón de demostración. Sin caché; cualquier excepción se traduce a `null`.
+     * el buzón de demostración. Un fallo de red se propaga como `AppResult.Error` para no decirle
+     * al usuario «te enviamos un código» cuando no se envió nada.
      */
-    override suspend fun createResetCode(email: String): String? = try {
-        api.post<ResetCodeDto>("auth/reset-code", ResetCodeRequestDto(email)).resetCode
+    override suspend fun createResetCode(email: String): AppResult<String?> = try {
+        AppResult.Success(api.post<ResetCodeDto>("auth/reset-code", ResetCodeRequestDto(email)).resetCode)
     } catch (e: Exception) {
-        null
+        api.failure(e)
     }
 
     /**
      * `POST auth/reset-password` (A8): usa `postNoContent` porque la respuesta no tiene cuerpo; al
-     * tener éxito limpia la sesión en memoria. Errores → `AppResult.Error` con mensaje de la API.
+     * tener éxito limpia la sesión en memoria. Errores → `AppResult.Error` con mensaje amigable.
      */
     override suspend fun resetPassword(email: String, code: String, newPassword: String): AppResult<Unit> = try {
         api.postNoContent(
@@ -119,7 +125,7 @@ class RemoteAuthRepository(
         session.clear()
         AppResult.Success(Unit)
     } catch (e: Exception) {
-        AppResult.Error(api.errorMessage(e))
+        api.failure(e)
     }
 
     /**

@@ -6,13 +6,17 @@ import com.example.librerias.data.remote.ApiClient
 import com.example.librerias.data.remote.RemoteAuthRepository
 import com.example.librerias.data.remote.RemoteCalendarRepository
 import com.example.librerias.data.remote.RemoteGroupRepository
+import com.example.librerias.data.remote.RemoteErrorReporter
 import com.example.librerias.data.remote.RemoteMeetingRepository
 import com.example.librerias.data.remote.RemoteTaskRepository
 import com.example.librerias.data.remote.SessionStore
+import com.example.librerias.model.AppError
 import com.example.librerias.domain.repository.*
 import com.example.librerias.domain.usecase.*
 import com.example.librerias.domain.util.TodayProvider
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 
 /**
  * Contenedor manual de dependencias de la app KMP.
@@ -35,21 +39,59 @@ class AppContainer {
     /** Cliente Ktor compartido por todos los repositorios remotos. */
     val apiClient = ApiClient(session = sessionStore)
 
+    /** Canal compartido por las cachés para avisar de fallos de carga (API/RED apagadas). */
+    private val errorReporter = RemoteErrorReporter()
+
+    /** Último fallo de carga ya traducido a un mensaje seguro para la UI. */
+    val loadError: Flow<AppError?> = errorReporter.lastError.map { error ->
+        error?.let { apiClient.errorOf(it) }
+    }
+
+    /** Traduce una excepción de red a un error amigable; lo usan los ViewModels. */
+    fun errorOf(error: Throwable): AppError = apiClient.errorOf(error)
+
+    /** Igual que [errorOf], pero devuelve solo el texto listo para mostrar. */
+    fun errorMessage(error: Throwable): String = apiClient.errorMessage(error)
+
+    /** Cierra el aviso de conexión sin recargar (conserva el último listado conocido). */
+    fun clearLoadError() = errorReporter.clear()
+
+    /** Reintenta todas las cargas fallidas y limpia el aviso de conexión. */
+    suspend fun retryLoads() {
+        errorReporter.clear()
+        remoteGroupRepository.refreshAll()
+        remoteTaskRepository.refreshAll()
+        remoteMeetingRepository.refreshAll()
+        calendarRepository.refreshEvents()
+    }
+
     /** Repositorio remoto de grupos, reutilizado también por juntas y tareas. */
-    private val remoteGroupRepository = RemoteGroupRepository(apiClient)
+    private val remoteGroupRepository = RemoteGroupRepository(apiClient, errorReporter)
 
     /** Interfaz de grupos inyectada: implementación activa, la remota Ktor. */
     private val groupRepository: GroupRepository = remoteGroupRepository
 
     /** Calendario remoto; coordina los eventos creados junto a tareas y juntas. */
-    private val calendarRepository: RemoteCalendarRepository = RemoteCalendarRepository(apiClient)
+    private val calendarRepository: RemoteCalendarRepository =
+        RemoteCalendarRepository(apiClient, errorReporter)
+
+    /** Repositorio concreto de tareas, conservado para el reintento de cargas. */
+    private val remoteTaskRepository =
+        RemoteTaskRepository(apiClient, calendarRepository, errorReporter)
 
     /** Interfaz de tareas inyectada: implementación activa, la remota Ktor. */
-    private val taskRepository: TaskRepository = RemoteTaskRepository(apiClient, calendarRepository)
+    private val taskRepository: TaskRepository = remoteTaskRepository
+
+    /** Repositorio concreto de juntas: se expone como interfaz para las pantallas. */
+    private val remoteMeetingRepository = RemoteMeetingRepository(
+        apiClient,
+        remoteGroupRepository,
+        calendarRepository,
+        errorReporter,
+    )
 
     /** Repositorio de juntas: se expone porque las pantallas consultan también sus respuestas. */
-    val meetingRepository: MeetingRepository =
-        RemoteMeetingRepository(apiClient, remoteGroupRepository, calendarRepository)
+    val meetingRepository: MeetingRepository = remoteMeetingRepository
 
     /** Interfaz de autenticación inyectada: implementación activa, la remota Ktor. */
     private val authRepository: AuthRepository = RemoteAuthRepository(apiClient, sessionStore)
@@ -129,7 +171,7 @@ class AppContainer {
     /** Edición de una tarea existente. */
     val updateTask = UpdateTaskUseCase(taskRepository, todayProvider)
 
-    /** Borrado de una tarea (la navegación elimina además su evento de calendario). */
+    /** Borrado de una tarea (el backend elimina su evento de calendario en la misma transacción). */
     val deleteTask = DeleteTaskUseCase(taskRepository)
 
     // Calendario

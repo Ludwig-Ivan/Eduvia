@@ -3,6 +3,7 @@ package com.example.librerias.ui.meetings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.librerias.di.AppContainer
+import com.example.librerias.model.AppError
 import com.example.librerias.model.AppResult
 import com.example.librerias.model.Meeting
 import com.example.librerias.model.MeetingResponse
@@ -17,8 +18,8 @@ import kotlinx.coroutines.launch
 
 /**
  * Gestiona las juntas del grupo: observa juntas, respuestas y asistencia, y usa crear,
- * actualizar, responder y borrar juntas. Expone `meetings` (con la respuesta del alumno)
- * y `creationError` a la UI.
+ * actualizar, responder y borrar juntas. Expone `meetings`, `creationError` (formulario) y
+ * `actionError` (respuesta/borrado) a la UI.
  */
 class MeetingsViewModel(
     private val container: AppContainer,
@@ -41,13 +42,22 @@ class MeetingsViewModel(
     private val _creationError = MutableStateFlow<String?>(null)
     val creationError: StateFlow<String?> = _creationError
 
+    private val _actionError = MutableStateFlow<AppError?>(null)
+    val actionError: StateFlow<AppError?> = _actionError
+
     private var isCreatingMeeting = false
 
     fun clearCreationError() { _creationError.value = null }
+    fun clearActionError() { _actionError.value = null }
 
     fun respondToMeeting(meetingId: Long, studentId: Long, response: MeetingResponse) {
         viewModelScope.launch {
-            container.respondToMeeting(meetingId, studentId, response)
+            _actionError.value = null
+            try {
+                container.respondToMeeting(meetingId, studentId, response)
+            } catch (e: Exception) {
+                _actionError.value = container.errorOf(e)
+            }
         }
     }
 
@@ -67,6 +77,8 @@ class MeetingsViewModel(
                     is AppResult.Success -> onSuccess()
                     is AppResult.Error -> _creationError.value = result.message
                 }
+            } catch (e: Exception) {
+                _creationError.value = container.errorMessage(e)
             } finally {
                 isCreatingMeeting = false
             }
@@ -93,6 +105,8 @@ class MeetingsViewModel(
                     is AppResult.Success -> onSuccess()
                     is AppResult.Error -> _creationError.value = result.message
                 }
+            } catch (e: Exception) {
+                _creationError.value = container.errorMessage(e)
             } finally {
                 isCreatingMeeting = false
             }
@@ -101,7 +115,12 @@ class MeetingsViewModel(
 
     fun deleteMeeting(meetingId: Long) {
         viewModelScope.launch {
-            container.deleteMeeting(meetingId)
+            _actionError.value = null
+            try {
+                container.deleteMeeting(meetingId)
+            } catch (e: Exception) {
+                _actionError.value = container.errorOf(e)
+            }
         }
     }
 }

@@ -43,15 +43,15 @@ interface GroupRepository {
 
     /**
      * Busca un grupo por [id].
-     * @return el grupo, o null si no existe.
+     * @return el grupo, null si no existe, o `AppResult.Error` si la API no respondió.
      */
-    suspend fun findById(id: Long): SchoolGroup?
+    suspend fun findById(id: Long): AppResult<SchoolGroup?>
 
     /**
      * Busca un grupo por su código de clase [code], recortado y sin distinguir mayúsculas.
-     * @return el grupo, o null si el código no existe (base de los códigos del registro).
+     * @return el grupo, null si el código no existe, o `AppResult.Error` si la API no respondió.
      */
-    suspend fun findByCode(code: String): SchoolGroup?
+    suspend fun findByCode(code: String): AppResult<SchoolGroup?>
 
     /**
      * Vincula a [parentId] el hijo descrito en [child], resolviendo su grupo por código de clase.
