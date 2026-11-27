@@ -10,8 +10,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Capa de dominio: grupos escolares, alumnos y vinculación de hijos con su padre.
  *
- * Lo satisfacen `GroupRepositoryImpl` (datos de muestra en memoria) y `RemoteGroupRepository`
- * (HTTP: `groups`, `groups/{id}`, `groups/by-code`, `groups/{groupId}/students`, `students` y
+ * Lo satisface `RemoteGroupRepository` (HTTP: `groups`, `groups/{id}`, `groups/by-code`, `groups/{groupId}/students`, `students` y
  * `students:link`). Los DTO del contrato de API se traducen a modelos del dominio, de modo que
  * la UI y los casos de uso no conocen la API.
  */

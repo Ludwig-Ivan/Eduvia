@@ -39,7 +39,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.librerias.model.Meeting
@@ -60,8 +59,8 @@ fun TeacherHomeScreen(
     meetings: List<Meeting> = emptyList(),
     tasks: List<SchoolTask> = emptyList(),
     viewModel: MeetingsViewModel,
-    userName: String = "Laura",
-    groupName: String = "3° B",
+    userName: String = "",
+    groupName: String = "",
     groupSize: Int = 0, // 👈 CAMBIAMOS EL 28 POR 0
     groups: List<SchoolGroup> = emptyList(),
     onGroupSelected: (SchoolGroup) -> Unit = {},
@@ -311,21 +310,4 @@ private fun DeliveryRow(subject: String, count: String) {
         Text(subject, fontSize = 14.sp)
         Text(count, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
     }
-}
-
-@Preview(showBackground = true, widthDp = 390, heightDp = 844)
-@Composable
-fun TeacherHomePreview() {
-    TeacherHomeScreen(
-        userName = "Laura",
-        groupName = "3° B",
-        groupSize = 28,
-        groups = emptyList(),
-        viewModel = androidx.lifecycle.viewmodel.compose.viewModel {
-            com.example.librerias.ui.meetings.MeetingsViewModel(
-                container = com.example.librerias.di.AppContainer(),
-                groupId = 1L
-            )
-        }
-    )
 }

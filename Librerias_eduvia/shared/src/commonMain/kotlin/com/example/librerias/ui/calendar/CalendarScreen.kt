@@ -47,8 +47,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.librerias.data.CalendarSampleData
-import com.example.librerias.data.MeetingSampleData
 import com.example.librerias.model.CalendarDate
 import com.example.librerias.model.CalendarEvent
 import com.example.librerias.model.CalendarEventType
@@ -524,8 +522,8 @@ private fun CalendarEventType.icon(): ImageVector = when (this) {
 @Composable
 fun CalendarScreenPreview() {
     CalendarScreen(
-        events = CalendarSampleData.events,
-        meetings = MeetingSampleData.meetings,
+        events = emptyList(),
+        meetings = emptyList(),
         today = CalendarDate(2026, 10, 12)
     )
 }

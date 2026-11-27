@@ -8,7 +8,6 @@ import com.example.librerias.model.NewTaskInput
 import com.example.librerias.model.SchoolTask
 import com.example.librerias.model.Subject
 import com.example.librerias.model.User
-import com.example.librerias.model.UserRole
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +19,11 @@ import kotlinx.coroutines.launch
  * `UpdateTaskUseCase`, `MarkTaskDeliveredUseCase` y `DeleteTaskUseCase`.
  * Expone `tasks` y `creationError` a la UI.
  */
-class TasksViewModel(private val container: AppContainer, private val groupId: Long) : ViewModel() {
+class TasksViewModel(
+    private val container: AppContainer,
+    private val groupId: Long,
+    private val teacher: User
+) : ViewModel() {
 
     val tasks: StateFlow<List<SchoolTask>> = container.observeTasks(groupId = groupId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -57,10 +60,7 @@ class TasksViewModel(private val container: AppContainer, private val groupId: L
         viewModelScope.launch {
             _creationError.value = null
 
-            // Usuario de prueba para la creación
-            val fakeTeacher = User(1L, "Laura", "laura@eduvia.mx", "", UserRole.TEACHER)
-
-            when (val result = container.createTask(groupId = groupId, teacher = fakeTeacher, input = input)) {
+            when (val result = container.createTask(groupId = groupId, teacher = teacher, input = input)) {
                 is AppResult.Success -> onSuccess()
                 is AppResult.Error -> _creationError.value = result.message
             }

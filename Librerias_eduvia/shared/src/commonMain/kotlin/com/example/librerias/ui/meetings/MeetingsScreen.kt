@@ -39,7 +39,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.librerias.data.MeetingSampleData
 import com.example.librerias.model.Meeting
 import com.example.librerias.model.MeetingResponse
 import com.example.librerias.model.Student
@@ -356,5 +355,5 @@ private fun MeetingsCreateFab(onClick: () -> Unit, modifier: Modifier = Modifier
 @Preview(showBackground = true, widthDp = 390, heightDp = 844)
 @Composable
 fun MeetingsScreenPreview() {
-    MeetingsScreen(meetings = MeetingSampleData.meetings)
+    MeetingsScreen(meetings = emptyList())
 }

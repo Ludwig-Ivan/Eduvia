@@ -9,7 +9,7 @@ import com.example.librerias.navigation.AppNavHost
 
 /**
  * Punto de entrada de Android: crea el contenedor y delega la interfaz en el código compartido
- * (`App()` / `AppNavHost` del módulo `shared`), sin lógica de UI propia.
+ * (`AppNavHost` del módulo `shared`), sin lógica de UI propia.
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

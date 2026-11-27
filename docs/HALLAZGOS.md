@@ -67,13 +67,15 @@
 
 - **Archivo y línea:** `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/ui/home/HomeViewModel.kt:18`.
 - **Evidencia:** comentario `// Observa las tareas (asumimos que el grupo 1 es el del usuario actual para esta demo)`; el repo remoto exige `groupId`, por lo que la pantalla no usa el grupo del usuario autenticado.
-- **Propuesta:** documentar la limitación y, si se decide corregir, pasar el `groupId` desde la sesión en lugar del literal `1`. Cambiaría comportamiento, así que no se hace en esta tarea.
+- **Propuesta original:** documentar la limitación y, si se decide corregir, pasar el `groupId` desde la sesión en lugar del literal `1`.
+- **Resolución:** corregido; `AppNavHost` resuelve el grupo activo desde los grupos reales de la sesión y lo pasa a `HomeViewModel` y a `TasksViewModel`.
 
 ### H10 — Repositorios «fake» conviven con los remotos
 
 - **Archivo y líneas:** `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/repository/` (5 implementaciones) y `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/di/AppContainer.kt:17-35`.
 - **Evidencia:** las implementaciones en memoria siguen existiendo y `AppContainer` inyecta las remotas; leer solo el paquete `data/repository` puede dar a entender que la app todavía no llama a la API.
-- **Propuesta:** explicar en `docs/app-kmp.md` y en el KDoc de `AppContainer` que son implementaciones de reserva/ejemplo y que la ruta activa es `data/remote`. No eliminarlas sin decisión.
+- **Propuesta original:** explicar en `docs/app-kmp.md` y en el KDoc de `AppContainer` que son implementaciones de reserva/ejemplo y que la ruta activa es `data/remote`. No eliminarlas sin decisión.
+- **Resolución:** eliminadas las 5 implementaciones en memoria y los 4 archivos de datos de muestra que las alimentaban; la app solo usa `data/remote`.
 
 ### H11 — `spring.application.name` duplicado
 

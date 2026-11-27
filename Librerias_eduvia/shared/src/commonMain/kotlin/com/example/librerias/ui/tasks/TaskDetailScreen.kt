@@ -96,7 +96,8 @@ fun TaskDetailScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        "Publicada por la maestra Laura · ${task?.publishedDate?.day ?: 9} de ${monthNames[(task?.publishedDate?.month ?: 10) - 1].lowercase()}",
+                        if (task == null) "Publicada por la maestra"
+                        else "Publicada por la maestra ${task.teacherName} · ${task.publishedDate.day} de ${monthNames[task.publishedDate.month - 1].lowercase()}",
                         fontSize = 14.sp,
                         color = EduviaColors.TextSecondary
                     )

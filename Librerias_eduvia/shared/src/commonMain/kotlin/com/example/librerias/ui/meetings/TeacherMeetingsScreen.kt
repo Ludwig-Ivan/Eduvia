@@ -25,7 +25,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.librerias.model.Meeting
@@ -35,8 +34,6 @@ import com.example.librerias.ui.components.BottomNavBar
 import com.example.librerias.ui.components.BottomTab
 import com.example.librerias.ui.theme.EduviaColors
 import com.example.librerias.ui.theme.poppinsFamily
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.librerias.di.AppContainer
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -263,13 +260,4 @@ private fun TeacherCreateFab(onClick: () -> Unit, modifier: Modifier = Modifier)
         Icon(Icons.Outlined.Add, null, tint = Color.White, modifier = Modifier.size(22.dp))
         Text("Crear", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
     }
-}
-
-@Preview(showBackground = true, widthDp = 390, heightDp = 844)
-@Composable
-fun TeacherMeetingsPreview() {
-    TeacherMeetingsScreen(
-        meetings = emptyList(),
-        viewModel = viewModel { MeetingsViewModel(container = AppContainer(), groupId = 1L) }
-    )
 }

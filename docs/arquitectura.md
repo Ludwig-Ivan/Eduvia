@@ -37,7 +37,7 @@ flowchart LR
 | Plataforma | Motor HTTP y base URL mediante `expect/actual` | `ApiClient.kt` (`commonMain`) y `PlatformHttpClient.kt` en `androidMain` / `iosMain` |
 | Entradas nativas | Actividad Android y aplicación Swift | `Librerias_eduvia/androidApp/` y `Librerias_eduvia/iosApp/` |
 
-Las implementaciones en memoria de `data/repository/` siguen en el código, pero `di/AppContainer.kt` inyecta las remotas: son implementaciones de reserva, no la ruta activa. Esa convivencia es el hallazgo **H10**; están documentadas en [`HALLAZGOS.md`](HALLAZGOS.md) y la duda **Q12** en [`backend/OPEN-QUESTIONS.md`](backend/OPEN-QUESTIONS.md). De igual forma, `HomeViewModel.kt` fija el grupo `1` en la demo (**H9**, **Q11**).
+`di/AppContainer.kt` inyecta únicamente los repositorios remotos de `data/remote/`: la app no tiene implementaciones en memoria ni datos de ejemplo, y la única fuente de datos es la API (que consulta PostgreSQL). `HomeViewModel` recibe el grupo real resuelto en `AppNavHost` desde los grupos de la sesión. Con esto quedan resueltos **H9/H10** y **Q11/Q12**, documentados en [`HALLAZGOS.md`](HALLAZGOS.md) y [`backend/OPEN-QUESTIONS.md`](backend/OPEN-QUESTIONS.md).
 
 ## Capas del backend
 
@@ -178,7 +178,7 @@ El detalle clase por clase está en [`INVENTARIO.md`](INVENTARIO.md). No se mezc
 ### Puntos no confirmados y hallazgos relacionados
 
 - ⚠️ Por confirmar — botones «copiar» y «compartir» sin acción en `GroupsReadyScreen.kt` (**Q10**, **H8**): se documentan como affordances visuales; ver [`OPEN-QUESTIONS.md`](backend/OPEN-QUESTIONS.md) y [`HALLAZGOS.md`](HALLAZGOS.md).
-- ⚠️ Por confirmar — grupo fijo `1` en `HomeViewModel.kt` (**Q11**, **H9**): limitación de la demo, no se cambia el comportamiento; ver [`OPEN-QUESTIONS.md`](backend/OPEN-QUESTIONS.md).
-- ⚠️ Por confirmar — conservar o retirar los repositorios en memoria (**Q12**, **H10**): se conservan; ver [`OPEN-QUESTIONS.md`](backend/OPEN-QUESTIONS.md).
+- ✅ Resuelto — el grupo activo ya no es el literal `1`: `AppNavHost` lo resuelve desde los grupos reales y lo pasa a `HomeViewModel` (**Q11**, **H9**).
+- ✅ Resuelto — los repositorios en memoria y sus datos de muestra se eliminaron: solo quedan los remotos (**Q12**, **H10**).
 - ⚠️ Por confirmar — `spring.application.name` duplicado en `application.properties` y `application.yml` (**Q13**, **H11**): se deja como está; ver [`OPEN-QUESTIONS.md`](backend/OPEN-QUESTIONS.md).
 - El README de la app sigue siendo la plantilla KMP (**H6**), la guía original usa nombres de plantilla (**H7**) y [`guias/README.md`](guias/README.md) contiene un diagrama ASCII (**H12**). No se corrigen aquí: inventario completo en [`HALLAZGOS.md`](HALLAZGOS.md). Las inconsistencias documentales H1–H5 también están registradas allí.

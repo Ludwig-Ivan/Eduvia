@@ -7,8 +7,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Capa de dominio: eventos de calendario vistos por rol, sin depender del origen de datos.
  *
- * Lo satisfacen `CalendarRepositoryImpl` (listas en memoria para la demo) y
- * `RemoteCalendarRepository` (HTTP `calendar/events`, con caché por rol). El contrato de API
+ * Lo satisface `RemoteCalendarRepository` (HTTP `calendar/events`, con caché por rol). El contrato de API
  * crea el evento de una tarea o junta en la misma operación que la entidad: por eso `TASK` y
  * `MEETING` solo refrescan la caché local al pasar por `addEvent`, y solo `EXAM` hace un POST.
  */

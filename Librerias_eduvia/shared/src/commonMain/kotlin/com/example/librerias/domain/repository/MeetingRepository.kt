@@ -8,8 +8,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Capa de dominio: juntas escolares, asistencia derivada y respuestas de las familias.
  *
- * Lo satisfacen `MeetingRepositoryImpl` (en memoria: alumnos del grupo más un mapa de respuestas)
- * y `RemoteMeetingRepository` (HTTP: `meetings`, `meetings/{id}`, `meetings/{id}/attendance`,
+ * Lo satisface `RemoteMeetingRepository` (HTTP: `meetings`, `meetings/{id}`, `meetings/{id}/attendance`,
  * `meetings/responses`, `meetings/{id}/responses/{studentId}` y `meetings/{id}/reminders`).
  * La interfaz refleja el contrato de API sin exponer DTO ni detalles de red.
  */

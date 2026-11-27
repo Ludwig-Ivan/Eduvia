@@ -8,8 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 /**
  * Capa de dominio: contrato de autenticación, registro y sesión, independiente del origen de datos.
  *
- * Lo satisfacen `AuthRepositoryImpl` (demo en memoria, con la sesión en un `StateFlow`) y
- * `RemoteAuthRepository` (HTTP con `SessionStore`). Coincide con el contrato de API
+ * Lo satisface `RemoteAuthRepository` (HTTP con `SessionStore`). Coincide con el contrato de API
  * `auth/login`, `auth/register`, `auth/exists/email`, `auth/exists/phone`, `auth/reset-code`,
  * `auth/reset-password` y `auth/logout`; los casos de uso solo conocen esta interfaz.
  */

@@ -2,7 +2,7 @@ import UIKit
 import SwiftUI
 import Shared
 
-/// Puente SwiftUI → Compose: muestra el UIViewController generado por el código compartido (`App()`), sin lógica propia.
+/// Puente SwiftUI → Compose: muestra el UIViewController generado por el código compartido (`MainViewController()`), sin lógica propia.
 struct ComposeView: UIViewControllerRepresentable {
     func makeUIViewController(context: Self.Context) -> UIViewController {
         MainViewControllerKt.MainViewController()

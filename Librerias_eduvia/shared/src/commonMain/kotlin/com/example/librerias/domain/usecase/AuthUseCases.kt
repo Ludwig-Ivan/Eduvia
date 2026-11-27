@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 /**
  * Expone la sesión como `StateFlow` para que la UI reaccione a login y logout.
- * La sesión se guarda solo en memoria (`AuthRepositoryImpl` o `SessionStore`): al reiniciar
+ * La sesión se guarda solo en memoria (`SessionStore`, con el token de la API): al reiniciar
  * el proceso se pierde, así que siempre hay que leerla de aquí y no de un estado local.
  *
  * @param auth repositorio del que se lee el usuario activo.

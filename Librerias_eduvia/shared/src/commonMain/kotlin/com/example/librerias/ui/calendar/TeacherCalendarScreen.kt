@@ -47,7 +47,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.librerias.data.TeacherCalendarSampleData
 import com.example.librerias.model.AttendanceSummary
 import com.example.librerias.model.CalendarDate
 import com.example.librerias.model.CalendarEvent
@@ -69,7 +68,7 @@ import com.example.librerias.ui.theme.poppinsFamily
 @Composable
 fun TeacherCalendarScreen(
     modifier: Modifier = Modifier,
-    events: List<CalendarEvent> = TeacherCalendarSampleData.events,
+    events: List<CalendarEvent> = emptyList(),
     today: CalendarDate,                                      // ✅ Dinámico
     initialSelected: CalendarDate = today,
     groupName: String = "Grupo 3B",

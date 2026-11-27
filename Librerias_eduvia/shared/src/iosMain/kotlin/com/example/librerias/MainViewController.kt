@@ -7,7 +7,7 @@ import platform.UIKit.UIViewController
 
 /**
  * Punto de entrada iOS: crea el `ComposeUIViewController` que aloja la interfaz Compose
- * de la aplicación, equivalente a la que monta `App()`; la base URL local se define
+ * de la aplicación; la base URL local se define
  * en `PlatformHttpClient.kt` de `iosMain`.
  */
 fun MainViewController(): UIViewController = ComposeUIViewController {

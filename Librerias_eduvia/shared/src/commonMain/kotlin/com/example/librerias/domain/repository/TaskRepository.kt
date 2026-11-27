@@ -7,8 +7,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Capa de dominio: tareas escolares y entregas de los alumnos.
  *
- * Lo satisfacen `TaskRepositoryImpl` (en memoria) y `RemoteTaskRepository` (HTTP: `tasks`,
- * `tasks/{id}` y `tasks/{id}/deliveries`; el backend crea y borra el evento de calendario
+ * Lo satisface `RemoteTaskRepository` (HTTP: `tasks`, `tasks/{id}` y `tasks/{id}/deliveries`; el backend crea y borra el evento de calendario
  * asociado). Los métodos corresponden al contrato de API y devuelven modelos del dominio.
  */
 interface TaskRepository {

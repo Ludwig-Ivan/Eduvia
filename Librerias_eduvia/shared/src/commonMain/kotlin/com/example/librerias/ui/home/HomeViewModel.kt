@@ -11,15 +11,15 @@ import kotlinx.coroutines.flow.stateIn
 
 /**
  * Prepara el resumen de inicio: usa `ObserveMeetingsUseCase` y `ObserveTasksUseCase`.
- * Expone a la UI `meetings` (próximas juntas) y `tasks` (tareas del grupo de la demo).
+ * Expone a la UI `meetings` (próximas juntas) y `tasks` (tareas del grupo activo).
  */
-class HomeViewModel(private val container: AppContainer) : ViewModel() {
+class HomeViewModel(private val container: AppContainer, private val groupId: Long) : ViewModel() {
 
     // Observa las juntas próximas
     val meetings: StateFlow<List<Meeting>> = container.observeMeetings()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    // Observa las tareas (asumimos que el grupo 1 es el del usuario actual para esta demo)
-    val tasks: StateFlow<List<SchoolTask>> = container.observeTasks(groupId = 1L)
+    // Observa las tareas del grupo activo, resuelto desde los grupos reales de la sesión
+    val tasks: StateFlow<List<SchoolTask>> = container.observeTasks(groupId = groupId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 }

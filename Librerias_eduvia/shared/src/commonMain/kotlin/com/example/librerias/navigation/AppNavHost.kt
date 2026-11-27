@@ -176,7 +176,7 @@ fun AppNavHost(container: AppContainer) {
             )
         }
         val tasksVm: TasksViewModel = viewModel(key = "tasks_$currentGroupId") {
-            TasksViewModel(container, currentGroupId)
+            TasksViewModel(container, currentGroupId, user)
         }
         val calendarVm: CalendarViewModel = viewModel(key = "calendar_${currentGroupId}_$childKey") {
             CalendarViewModel(container, user.role, currentGroupId, studentId = selectedChild?.id)

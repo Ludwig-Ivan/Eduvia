@@ -17,11 +17,9 @@ import kotlinx.coroutines.flow.StateFlow
 /**
  * Contenedor manual de dependencias de la app KMP.
  *
- * Las implementaciones activas son las remotas de `data/remote` (capa de red Ktor); la UI
- * sigue consumiendo las interfaces de dominio. Los repositorios en memoria del
- * paquete `data/repository` se conservan como implementaciones de reserva/ejemplo y no se
- * inyectan aquí (HALLAZGOS H10 / OPEN-QUESTIONS Q12). El sufijo `Impl` identifica a esas
- * implementaciones de reserva dentro del paquete `data/repository`.
+ * Las implementaciones son las remotas de `data/remote` (capa de red Ktor): la UI consume
+ * las interfaces de dominio y todos los datos llegan de la API, única fuente de datos.
+ * No hay repositorios en memoria ni datos de ejemplo en la app.
  *
  * `FakeEmailSender` no envía correos: solo alimenta `demoInbox` con el código que devuelve
  * el backend en el perfil `dev` (OPEN-QUESTIONS Q5).

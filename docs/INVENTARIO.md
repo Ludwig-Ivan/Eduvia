@@ -46,11 +46,11 @@
 ### App KMP (`com.example.librerias`)
 
 - [x] `com.example.librerias` (`commonMain`) — composables raíz y tema.
-- [x] `com.example.librerias.data` (`commonMain`) — datos de demostración, bandeja de correo y proveedor de "hoy".
+- [x] `com.example.librerias.data` (`commonMain`) — bandeja de correo demo y proveedor del reloj real.
 - [x] `com.example.librerias.data.remote` (`commonMain`) — cliente Ktor, DTOs, mappers, sesión y repositorios remotos.
 - [x] `com.example.librerias.data.remote` (`androidMain`) — motor OkHttp y base URL Android.
 - [x] `com.example.librerias.data.remote` (`iosMain`) — motor Darwin y base URL iOS.
-- [x] `com.example.librerias.data.repository` (`commonMain`) — implementaciones "fake" previas a la API.
+- [x] `com.example.librerias.data.repository` (`commonMain`) — eliminado: solo quedan los repositorios remotos de `data/remote`.
 - [x] `com.example.librerias.di` (`commonMain`) — contenedor de dependencias.
 - [x] `com.example.librerias.domain.repository` (`commonMain`) — contratos de repositorio de dominio.
 - [x] `com.example.librerias.domain.usecase` (`commonMain`) — casos de uso.
@@ -168,15 +168,11 @@ Ruta común: `backend/src/main/kotlin/com/example/librerias/api/`.
 
 Ruta común: `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/`.
 
-### Raíz y datos de demostración
+### Raíz y utilidades
 
 - [x] `DarkModeColors` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/AppTheme.kt`.
-- [x] `CalendarSampleData` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/CalendarSampleData.kt`.
 - [x] `DemoTodayProvider` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/DemoTodayProvider.kt`.
 - [x] `FakeEmailSender` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/FakeEmailSender.kt`.
-- [x] `MeetingSampleData` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/MeetingSampleData.kt`.
-- [x] `SchoolSampleData` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/SchoolSampleData.kt`.
-- [x] `TeacherCalendarSampleData` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/TeacherCalendarSampleData.kt`.
 
 ### Capa de red (`data/remote/`)
 
@@ -227,14 +223,9 @@ Ruta común: `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/libreria
 - [x] `RemoteTaskRepository` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/remote/RemoteTaskRepository.kt`.
 - [x] `SessionStore` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/remote/SessionStore.kt`.
 
-### Repositorios "fake" e inyección
+### Inyección de dependencias
 
-- [x] `AuthRepositoryImpl` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/repository/AuthRepositoryImpl.kt`.
-- [x] `CalendarRepositoryImpl` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/repository/CalendarRepositoryImpl.kt`.
-- [x] `GroupRepositoryImpl` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/repository/GroupRepositoryImpl.kt`.
-- [x] `MeetingRepositoryImpl` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/repository/MeetingRepositoryImpl.kt`.
-- [x] `TaskRepositoryImpl` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/data/repository/TaskRepositoryImpl.kt`.
-- [x] `AppContainer` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/di/AppContainer.kt`.
+- [x] `AppContainer` — `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/librerias/di/AppContainer.kt` (solo inyecta los repositorios remotos).
 
 ### Dominio
 

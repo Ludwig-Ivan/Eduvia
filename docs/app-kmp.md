@@ -39,9 +39,9 @@ Ruta común: `Librerias_eduvia/shared/src/commonMain/kotlin/com/example/libreria
 
 | Paquete | Responsabilidad |
 |---|---|
-| `data/` | Datos de demostración (`CalendarSampleData`, `MeetingSampleData`, `SchoolSampleData`, `TeacherCalendarSampleData`), `FakeEmailSender` y `DemoTodayProvider` (fija "hoy = 12 oct 2026", Q7). |
+| `data/` | `FakeEmailSender` (bandeja demo de recuperación, Q5) y `DemoTodayProvider` (reloj real del dispositivo, Q7). No hay datos de ejemplo. |
 | `data/remote/` | `ApiClient`, 31 DTOs `@Serializable`, mappers, `SessionStore`, `RemoteListStore` y 5 repositorios remotos (`Auth`, `Group`, `Task`, `Meeting`, `Calendar`). |
-| `data/repository/` | 5 implementaciones "fake" en memoria, conservadas como reserva; **no son la ruta activa** (H10 / Q12). |
+| `data/repository/` | Eliminado: ya no hay implementaciones en memoria; la única fuente de datos es `data/remote/` (H10 / Q12 resueltos). |
 | `di/` | `AppContainer.kt`: contenedor manual que decide qué implementación se inyecta. |
 | `domain/repository/` | 5 interfaces de dominio; la UI depende de ellas, no de Ktor. |
 | `domain/usecase/` | 24 casos de uso con validación y reglas de negocio. |
@@ -92,7 +92,7 @@ Los ViewModels exponen `StateFlow` y llaman a los casos de uso a través de `App
 | ViewModel | Estados / flujos expuestos | Observación |
 |---|---|---|
 | `LoginViewModel` | `isLoading`, `error`, `lockSeconds` | Bloqueo de 30 s tras 5 intentos fallidos. |
-| `HomeViewModel` | `meetings`, `tasks` | Usa el grupo literal `1` para tareas (H9 / Q11). |
+| `HomeViewModel` | `meetings`, `tasks` | Recibe el `groupId` real resuelto en `AppNavHost` desde los grupos de la sesión (H9 / Q11 resueltos). |
 | `TasksViewModel` | `tasks`, `creationError` | Crear, editar, borrar y marcar entrega; `groupId` obligatorio (T1). |
 | `MeetingsViewModel` | `meetings`, `creationError` | `createMeeting` vs. `updateMeeting` según `meetingToEdit`; asistencia y respuestas. |
 | `CalendarViewModel` | eventos por rol (`PARENT`/`TEACHER`) | La vista del docente recibe `attendance`; la del padre, `null`. |
@@ -153,10 +153,9 @@ cd Librerias_eduvia
 |---|---|---|
 | [H6](HALLAZGOS.md) | README plantilla | `Librerias_eduvia/README.md` menciona `jvmMain` (inexistente) y `:shared:testAndroidHostTest`; la tarea usada es `:shared:testAndroid`. |
 | [H8](HALLAZGOS.md) / [Q10](backend/OPEN-QUESTIONS.md) | Botones sin acción | `ui/auth/GroupsReadyScreen.kt:136,142` ("copiar" y "compartir") son solo affordances visuales. |
-| [H9](HALLAZGOS.md) / [Q11](backend/OPEN-QUESTIONS.md) | Grupo fijo | `ui/home/HomeViewModel.kt:18` observa `groupId = 1` en vez de tomarlo de la sesión. |
-| [H10](HALLAZGOS.md) / [Q12](backend/OPEN-QUESTIONS.md) | Repositorios "fake" | 5 implementaciones en memoria conviven con las remotas; `AppContainer` inyecta estas últimas. |
+> ✅ Resueltos: H9 / Q11 (el grupo ya se toma de la sesión en `AppNavHost`) y H10 / Q12 (se eliminaron los repositorios en memoria y sus datos de muestra). La app solo consume la API a través de `data/remote/`.
 
-Todas se enlazan, no se corrigen. Para el detalle de decisiones de producto, ver [`docs/backend/OPEN-QUESTIONS.md`](backend/OPEN-QUESTIONS.md) y [`docs/backend/DECISIONS.md`](backend/DECISIONS.md).
+Las limitaciones restantes se enlazan, no se corrigen. Para el detalle de decisiones de producto, ver [`docs/backend/OPEN-QUESTIONS.md`](backend/OPEN-QUESTIONS.md) y [`docs/backend/DECISIONS.md`](backend/DECISIONS.md).
 
 ## 10. Enlaces relacionados
 

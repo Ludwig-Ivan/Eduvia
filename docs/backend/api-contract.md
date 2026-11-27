@@ -47,7 +47,7 @@
 
 Todas las rutas llevan el prefijo `/api/v1`. Los endpoints deauth son públicos; el resto requieren `Authorization: Bearer <accessToken>`.
 
-### Autenticación y cuenta (`domain/repository/AuthRepository.kt`, `data/repository/AuthRepositoryImpl.kt`, `domain/usecase/AuthUseCases.kt`)
+### Autenticación y cuenta (`domain/repository/AuthRepository.kt`, `data/remote/RemoteAuthRepository.kt`, `domain/usecase/AuthUseCases.kt`)
 
 | # | Endpoint | Operación de la app | Request | Response | Errores |
 |---|---|---|---|---|---|

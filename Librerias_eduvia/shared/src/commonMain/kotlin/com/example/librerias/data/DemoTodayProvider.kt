@@ -9,12 +9,10 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 /**
- * Proveedor de la fecha "hoy" y de la hora actual para la app de demostración.
+ * Proveedor de la fecha "hoy" y de la hora actual.
  *
- * Los datos de ejemplo toman como referencia un "hoy" fijo en 12 de octubre de 2026
- * (ver `SchoolSampleData`), mientras que el backend usa la fecha real del sistema para sus
- * validaciones (OPEN-QUESTIONS Q7). Esta implementación consulta el reloj del dispositivo,
- * sin alterar el comportamiento existente.
+ * Consulta el reloj del dispositivo (la misma fecha real que usa el backend para sus
+ * validaciones, OPEN-QUESTIONS Q7); no fija ninguna fecha de ejemplo.
  */
 class DemoTodayProvider : TodayProvider {
 
